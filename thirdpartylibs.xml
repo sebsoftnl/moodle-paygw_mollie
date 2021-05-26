@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<libraries>
+    <library>
+        <location>thirdparty/Mollie</location>
+        <name>Mollie</name>
+        <version>1.9.1</version>
+        <license>BSD 2-Clause "Simplified" License</license>
+        <licenseversion></licenseversion>
+    </library>
+</libraries>
