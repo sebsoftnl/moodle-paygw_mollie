@@ -36,7 +36,7 @@ require_once($CFG->dirroot . '/payment/gateway/mollie/thirdparty/Mollie/vendor/a
 
 $params = [
     'component' => required_param('component', PARAM_COMPONENT),
-    'paymentarea' => required_param('paymentarea', PARAM_COMPONENT), // Assumption here!
+    'paymentarea' => required_param('paymentarea', PARAM_AREA),
     'itemid' => required_param('itemid', PARAM_INT),
     'internalid' => required_param('internalid', PARAM_INT)
 ];
@@ -55,6 +55,9 @@ $PAGE->set_heading($pagetitle);
 try {
     // Callback is provided with internal record ID to match OUR record.
     $molliepaymentrecord = $DB->get_record('paygw_mollie', ['id' => $params['internalid']], '*', MUST_EXIST);
+    // Verify record.
+    mollie_helper::assert_payment_record_variables($molliepaymentrecord,
+            $params['component'], $params['paymentarea'], $params['itemid']);
     // Early exit: don't process if already paid. Might do more in the future?
     if ($molliepaymentrecord->status === PaymentStatus::STATUS_PAID) {
         // Already paid for!

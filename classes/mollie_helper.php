@@ -50,16 +50,6 @@ require_once($CFG->dirroot . '/payment/gateway/mollie/thirdparty/Mollie/vendor/a
 class mollie_helper {
 
     /**
-     * Get DB instance
-     *
-     * @return \moodle_database
-     */
-    protected static function db() {
-        global $DB;
-        return $DB;
-    }
-
-    /**
      * Assert or throw
      *
      * @param bool $bool
@@ -74,29 +64,18 @@ class mollie_helper {
     }
 
     /**
-     * Fetch Mollie Payment entity based on the payment ID.
+     * Assert payment record variables
      *
-     * @param string $molliepaymentid
-     * @return \Mollie\Api\Resources\Payment
+     * @param stdClass $record stored mollie payment record
+     * @param string $component
+     * @param string $paymentarea
+     * @param string $itemid
+     * @throws moodle_exception
      */
-    public static function get_mollie_payment(string $molliepaymentid) {
-        // Mollie payment record (stores status).
-        $molliepaymentrecord = static::db()->get_record('paygw_mollie',
-                ['mollie_orderid' => $molliepaymentid], '*', MUST_EXIST);
-        // Config depends on the payment context.
-        $config = helper::get_gateway_configuration($molliepaymentrecord->component,
-                $molliepaymentrecord->paymentarea, $molliepaymentrecord->itemid, 'mollie');
-
-        // Finally we can initiate the Mollie API.
-        $mollie = new \Mollie\Api\MollieApiClient();
-        // DO NOT USE config. Testmode was stored in the mollie payment record.
-        if (!empty($molliepaymentrecord->testmode)) {
-            $mollie->setApiKey($config['apikeytest']);
-        } else {
-            $mollie->setApiKey($config['apikey']);
-        }
-        $molliepayment = $mollie->payments->get($molliepaymentid);
-        return $molliepayment;
+    public static function assert_payment_record_variables($record, $component, $paymentarea, $itemid) {
+        static::assert($record->component == $component && $record->paymentarea == $paymentarea && $record->itemid == $itemid,
+            'err:assert:paymentrecordvariables', 'paygw_mollie'
+        );
     }
 
     /**
@@ -114,6 +93,7 @@ class mollie_helper {
     public static function synchronize_status(\Mollie\Api\Resources\Payment $transaction = null,
             stdClass $transactionrecord = null) {
         global $DB;
+
         if ($transaction === null && $transactionrecord === null) {
             throw new moodle_exception('err:synchronizestatus:args:invalid', 'paygw_mollie');
         }
@@ -136,6 +116,7 @@ class mollie_helper {
             $transactionrecord = $DB->get_record('paygw_mollie',
                     ['orderid' => $transaction->id], '*', MUST_EXIST);
         }
+
         list($ccomponent, $cpaymentarea, $citemid, $cuserid) = explode('|', $transaction->metadata->extra1);
         // Ok, validate.
         if ($transactionrecord->component !== $ccomponent) {
@@ -206,7 +187,7 @@ class mollie_helper {
      * @return moodle_url
      */
     public static function determine_redirect_url($component, $paymentarea, $itemid) {
-        global $CFG;
+        global $CFG, $DB;
         // Find redirection.
         $url = new moodle_url('/');
         // Method only exists in 3.11+.
@@ -214,7 +195,7 @@ class mollie_helper {
             $url = helper::get_success_url($component, $paymentarea, $itemid);
         } else if ($component == 'enrol_fee' && $paymentarea == 'fee') {
             require_once($CFG->dirroot . '/course/lib.php');
-            $courseid = static::db()->get_field('enrol', 'courseid', ['enrol' => 'fee', 'id' => $itemid]);
+            $courseid = $DB->get_field('enrol', 'courseid', ['enrol' => 'fee', 'id' => $itemid]);
             if (!empty($courseid)) {
                 $url = course_get_url($courseid);
             }

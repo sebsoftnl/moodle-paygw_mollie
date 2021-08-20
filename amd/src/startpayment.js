@@ -13,9 +13,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-import $ from 'jquery';
+/**
+ * Payment implementation for mollie system.
+ *
+ * @package    paygw_mollie
+ * @module     paygw_mollie/startpayment
+ * @copyright  2021 Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 import * as Repository from 'paygw_mollie/repository';
-import Notification from 'core/notification';
+import * as Notification from 'core/notification';
+import * as str from 'core/str';
 
 /**
  * Detect selected payment method (if we have one).
@@ -37,23 +46,28 @@ function getSelectedPaymentMethod() {
  * @returns {void}
  */
 export const startPayment = (selector) => {
-    const doCreateTransaction = function(e) {
+    document.querySelector(selector).addEventListener('click', e => {
         e.preventDefault();
-        let invokeElement = $(e.currentTarget);
+        const dataset = e.currentTarget.dataset;
+
         Repository.createPayment(
-                invokeElement.data('component'),
-                invokeElement.data('paymentarea'),
-                invokeElement.data('itemid'),
-                invokeElement.data('description'),
+                dataset.component,
+                dataset.paymentarea,
+                dataset.itemid,
+                dataset.description,
                 getSelectedPaymentMethod(),
                 null,
-        ).then(function(result) {
+        ).then(result => {
             if (result.success) {
                 window.location.href = result.redirecturl;
             } else {
-                // hmmmm.
+                str.get_strings([
+                        {key: 'startpayment:failed:title', component: 'paygw_mollie'},
+                        {key: 'startpayment:failed:btncancel', component: 'paygw_mollie'},
+                ]).then(strings => {
+                    Notification.alert(strings[0], result.message, strings[1]);
+                });
             }
         }).fail(Notification.exception);
-    };
-    $(selector).on('click', doCreateTransaction);
+    });
 };

@@ -28,14 +28,13 @@
  */
 
 use core_payment\helper;
-use paygw_mollie\mollie_helper;
 
 require_once(__DIR__ . '/../../../config.php');
 require_once(__DIR__ . '/thirdparty/Mollie/vendor/autoload.php');
 
 require_login();
-$component = required_param('component', PARAM_ALPHANUMEXT);
-$paymentarea = required_param('paymentarea', PARAM_ALPHANUMEXT);
+$component = required_param('component', PARAM_COMPONENT);
+$paymentarea = required_param('paymentarea', PARAM_AREA);
 $itemid = required_param('itemid', PARAM_INT);
 $description = required_param('description', PARAM_TEXT);
 
@@ -57,26 +56,20 @@ $config = (object) helper::get_gateway_configuration($component, $paymentarea, $
 $payable = helper::get_payable($component, $paymentarea, $itemid);
 $surcharge = helper::get_gateway_surcharge('mollie');
 
-$cost = helper::get_rounded_cost($payable->get_amount(), $payable->get_currency(), $surcharge);
-$coststr = helper::get_cost_as_string($payable->get_amount(), $payable->get_currency(), $surcharge);
-
 $PAGE->requires->js_call_amd('paygw_mollie/startpayment', 'startPayment', ['[data-action="mollie-startpayment"]']);
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('selectpaymentmethod', 'paygw_mollie'), 4);
+echo $OUTPUT->heading(get_string('selectpaymentmethod', 'paygw_mollie'), 2);
 echo '<div>' . get_string('selectpaymentmethod_help', 'paygw_mollie') . '</div>';
 
 $paymentmethods = \paygw_mollie\external::get_methods($component, $paymentarea, $itemid);
-$wcontext = (object)[
-    'methods' => array_values($paymentmethods)
-];
-echo $OUTPUT->render_from_template('paygw_mollie/mollie_select_method', $wcontext);
-
-echo '<div style="text-align: center;"><button class="btn btn-primary" data-action="mollie-startpayment"'
-    . ' data-component="'.$component.'"'
-    . ' data-paymentarea="'.$paymentarea.'"'
-    . ' data-itemid="'.$itemid.'"'
-    . ' data-description="'.$description.'"'
-    . '>'.get_string('startpayment', 'paygw_mollie').'</button></div>';
-
+if (count($paymentmethods) === 0) {
+    echo \html_writer::div(get_string('err:nopaymentmethods', 'paygw_mollie'), 'alert alert-warning');
+} else {
+    $wcontext = (object)[
+        'methods' => array_values($paymentmethods)
+    ];
+    echo $OUTPUT->render_from_template('paygw_mollie/mollie_select_method', $wcontext);
+    echo $OUTPUT->render_from_template('paygw_mollie/mollie_startpayment', (object)$params);
+}
 echo $OUTPUT->footer();

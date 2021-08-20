@@ -36,24 +36,8 @@
     <div class="paymentmethod" data-method-has-banks="{{hasbanks}}">
         <input type="radio" id="method_{{id}}" name="method" value="{{id}}" data-mollie-method="{{id}}"/>
         <label for="method_{{id}}">
-            <img src="{{#images.svg}}{{.}}{{/images.svg}}{{^images.svg}}{{#images.size2x}}{{.}}{{/images.size2x}}{{/images.svg}}"/> {{description}}
+            <img src="{{#images.svg}}{{.}}{{/images.svg}}{{^images.svg}}{{#images.size2x}}{{.}}{{/images.size2x}}{{/images.svg}}" alt=""/> {{description}}
         </label>
     </div>
 {{/methods}}
 </div>
-<style>
-.paymentmethod input[type="radio"] {
-    display: none;
-}
-.paymentmethod input[type="radio"] + label {
-    cursor: pointer;
-    padding: 1em;
-    width: 100%;
-    border-radius: 10px;
-    border: 0 px none;
-}
-.paymentmethod input[type="radio"]:checked + label {
-    background-color: #ddd;
-    border: 1px solid #080;
-}
-</style>

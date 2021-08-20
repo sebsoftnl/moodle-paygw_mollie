@@ -101,13 +101,20 @@ class external extends external_api {
         $methods = $mollie->methods->allActive();
         $rs = [];
         foreach ($methods as $method) {
+            $enabled = true;
+            if ((isset($method->minimumAmount) && !empty($method->minimumAmount->value)
+                        && $amount < $method->minimumAmount->value) ||
+                    (isset($method->maximumAmount) && !empty($method->maximumAmount->value)
+                            && $amount > $method->maximumAmount->value)) {
+                        $enabled = false;
+            }
             $rs[] = (object)[
                 'id' => $method->id,
                 'description' => $method->description,
                 'minamount' => $method->minimumAmount,
                 'maxamount' => $method->maximumAmount,
                 'status' => $method->status,
-                'enabled' => ($amount >= $method->minimumAmount->value && $amount <= $method->maximumAmount->value),
+                'enabled' => $enabled,
                 'images' => $method->image,
                 'hasbanks' => 0 // Reserved for future use.
             ];
