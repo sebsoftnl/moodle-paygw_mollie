@@ -93,4 +93,3 @@ try {
     echo $e->getMessage();
     redirect(new moodle_url('/'), get_string('unknownerror', 'paygw_mollie'), 0, notification::NOTIFY_ERROR);
 }
-
