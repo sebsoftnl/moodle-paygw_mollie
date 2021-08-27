@@ -43,7 +43,7 @@ function getSelectedPaymentMethod() {
  * Create payment in the backend and redirect.
  *
  * @param {String} selector
- * @returns {void}
+ * @returns {Promise}
  */
 export const startPayment = (selector) => {
     document.querySelector(selector).addEventListener('click', e => {
@@ -68,6 +68,7 @@ export const startPayment = (selector) => {
                     Notification.alert(strings[0], result.message, strings[1]);
                 });
             }
+            return Promise.resolve();
         }).fail(Notification.exception);
     });
 };
