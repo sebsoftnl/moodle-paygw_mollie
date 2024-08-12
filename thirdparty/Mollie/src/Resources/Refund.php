@@ -7,10 +7,6 @@ use Mollie\Api\Types\RefundStatus;
 class Refund extends \Mollie\Api\Resources\BaseResource
 {
     /**
-     * @var string
-     */
-    public $resource;
-    /**
      * Id of the payment method.
      *
      * @var string
@@ -72,6 +68,23 @@ class Refund extends \Mollie\Api\Resources\BaseResource
      */
     public $_links;
     /**
+     * An object containing information relevant to a refund issued for a split payment.
+     *
+     * @var array|object[]|null
+     */
+    public $routingReversal;
+    /**
+     * @var \stdClass|null
+     */
+    public $metadata;
+    /**
+     * @return bool
+     */
+    public function canBeCanceled()
+    {
+        return $this->isQueued() || $this->isPending();
+    }
+    /**
      * Is this refund queued?
      *
      * @return bool
@@ -115,6 +128,15 @@ class Refund extends \Mollie\Api\Resources\BaseResource
     public function isFailed()
     {
         return $this->status === \Mollie\Api\Types\RefundStatus::STATUS_FAILED;
+    }
+    /**
+     * Is this refund canceled?
+     *
+     * @return bool
+     */
+    public function isCanceled()
+    {
+        return $this->status === \Mollie\Api\Types\RefundStatus::STATUS_CANCELED;
     }
     /**
      * Cancel the refund.

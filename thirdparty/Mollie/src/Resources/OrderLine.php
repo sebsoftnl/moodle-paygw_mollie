@@ -2,7 +2,6 @@
 
 namespace Mollie\Api\Resources;
 
-use Mollie\Api\MollieApiClient;
 use Mollie\Api\Types\OrderLineStatus;
 use Mollie\Api\Types\OrderLineType;
 class OrderLine extends \Mollie\Api\Resources\BaseResource
@@ -336,12 +335,11 @@ class OrderLine extends \Mollie\Api\Resources\BaseResource
      * Update an orderline by supplying one or more parameters in the data array
      *
      * @return BaseResource
+     * @throws \Mollie\Api\Exceptions\ApiException
      */
     public function update()
     {
-        $url = "orders/{$this->orderId}/lines/{$this->id}";
-        $body = \json_encode($this->getUpdateData());
-        $result = $this->client->performHttpCall(\Mollie\Api\MollieApiClient::HTTP_PATCH, $url, $body);
+        $result = $this->client->orderLines->update($this->orderId, $this->id, $this->getUpdateData());
         return \Mollie\Api\Resources\ResourceFactory::createFromApiResult($result, new \Mollie\Api\Resources\Order($this->client));
     }
     /**
@@ -351,7 +349,7 @@ class OrderLine extends \Mollie\Api\Resources\BaseResource
      */
     public function getUpdateData()
     {
-        $data = ["name" => $this->name, 'imageUrl' => $this->imageUrl, 'productUrl' => $this->productUrl, 'metadata' => $this->metadata, 'quantity' => $this->quantity, 'unitPrice' => $this->unitPrice, 'discountAmount' => $this->discountAmount, 'totalAmount' => $this->totalAmount, 'vatAmount' => $this->vatAmount, 'vatRate' => $this->vatRate];
+        $data = ["name" => $this->name, 'imageUrl' => $this->imageUrl, 'productUrl' => $this->productUrl, 'metadata' => $this->metadata, 'sku' => $this->sku, 'quantity' => $this->quantity, 'unitPrice' => $this->unitPrice, 'discountAmount' => $this->discountAmount, 'totalAmount' => $this->totalAmount, 'vatAmount' => $this->vatAmount, 'vatRate' => $this->vatRate];
         // Explicitly filter only NULL values to keep "vatRate => 0" intact
         return \array_filter($data, function ($value) {
             return $value !== null;
