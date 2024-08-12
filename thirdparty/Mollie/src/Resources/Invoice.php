@@ -8,10 +8,6 @@ class Invoice extends \Mollie\Api\Resources\BaseResource
     /**
      * @var string
      */
-    public $resource;
-    /**
-     * @var string
-     */
     public $id;
     /**
      * @var string
@@ -62,10 +58,10 @@ class Invoice extends \Mollie\Api\Resources\BaseResource
      */
     public $grossAmount;
     /**
-     * Object containing the invoice lines.
-     * See https://docs.mollie.com/reference/v2/invoices-api/get-invoice for reference
+     * Array containing the invoice lines.
      *
-     * @var \stdClass
+     * @see https://docs.mollie.com/reference/v2/invoices-api/get-invoice
+     * @var array
      */
     public $lines;
     /**

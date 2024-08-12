@@ -2,78 +2,74 @@
 
 namespace Mollie\Api;
 
-use _PhpScoper3234cdc49fbb\Composer\CaBundle\CaBundle;
-use _PhpScoper3234cdc49fbb\GuzzleHttp\Client;
-use _PhpScoper3234cdc49fbb\GuzzleHttp\ClientInterface;
-use _PhpScoper3234cdc49fbb\GuzzleHttp\Exception\GuzzleException;
-use _PhpScoper3234cdc49fbb\GuzzleHttp\HandlerStack;
-use _PhpScoper3234cdc49fbb\GuzzleHttp\Psr7\Request;
-use _PhpScoper3234cdc49fbb\GuzzleHttp\RequestOptions as GuzzleRequestOptions;
+use Mollie\Api\Endpoints\BalanceEndpoint;
+use Mollie\Api\Endpoints\BalanceReportEndpoint;
+use Mollie\Api\Endpoints\BalanceTransactionEndpoint;
 use Mollie\Api\Endpoints\ChargebackEndpoint;
+use Mollie\Api\Endpoints\ClientEndpoint;
+use Mollie\Api\Endpoints\ClientLinkEndpoint;
 use Mollie\Api\Endpoints\CustomerEndpoint;
 use Mollie\Api\Endpoints\CustomerPaymentsEndpoint;
 use Mollie\Api\Endpoints\InvoiceEndpoint;
 use Mollie\Api\Endpoints\MandateEndpoint;
 use Mollie\Api\Endpoints\MethodEndpoint;
+use Mollie\Api\Endpoints\MethodIssuerEndpoint;
 use Mollie\Api\Endpoints\OnboardingEndpoint;
 use Mollie\Api\Endpoints\OrderEndpoint;
 use Mollie\Api\Endpoints\OrderLineEndpoint;
 use Mollie\Api\Endpoints\OrderPaymentEndpoint;
 use Mollie\Api\Endpoints\OrderRefundEndpoint;
 use Mollie\Api\Endpoints\OrganizationEndpoint;
+use Mollie\Api\Endpoints\OrganizationPartnerEndpoint;
 use Mollie\Api\Endpoints\PaymentCaptureEndpoint;
 use Mollie\Api\Endpoints\PaymentChargebackEndpoint;
 use Mollie\Api\Endpoints\PaymentEndpoint;
+use Mollie\Api\Endpoints\PaymentLinkEndpoint;
+use Mollie\Api\Endpoints\PaymentLinkPaymentEndpoint;
 use Mollie\Api\Endpoints\PaymentRefundEndpoint;
+use Mollie\Api\Endpoints\PaymentRouteEndpoint;
 use Mollie\Api\Endpoints\PermissionEndpoint;
 use Mollie\Api\Endpoints\ProfileEndpoint;
 use Mollie\Api\Endpoints\ProfileMethodEndpoint;
 use Mollie\Api\Endpoints\RefundEndpoint;
+use Mollie\Api\Endpoints\SettlementCaptureEndpoint;
+use Mollie\Api\Endpoints\SettlementChargebackEndpoint;
 use Mollie\Api\Endpoints\SettlementPaymentEndpoint;
+use Mollie\Api\Endpoints\SettlementRefundEndpoint;
 use Mollie\Api\Endpoints\SettlementsEndpoint;
 use Mollie\Api\Endpoints\ShipmentEndpoint;
 use Mollie\Api\Endpoints\SubscriptionEndpoint;
+use Mollie\Api\Endpoints\SubscriptionPaymentEndpoint;
+use Mollie\Api\Endpoints\TerminalEndpoint;
 use Mollie\Api\Endpoints\WalletEndpoint;
 use Mollie\Api\Exceptions\ApiException;
+use Mollie\Api\Exceptions\HttpAdapterDoesNotSupportDebuggingException;
 use Mollie\Api\Exceptions\IncompatiblePlatform;
-use Mollie\Api\Guzzle\RetryMiddlewareFactory;
-use _PhpScoper3234cdc49fbb\Psr\Http\Message\ResponseInterface;
-use _PhpScoper3234cdc49fbb\Psr\Http\Message\StreamInterface;
+use Mollie\Api\HttpAdapter\MollieHttpAdapterPicker;
+use Mollie\Api\Idempotency\DefaultIdempotencyKeyGenerator;
 class MollieApiClient
 {
     /**
      * Version of our client.
      */
-    const CLIENT_VERSION = "2.29.0";
+    public const CLIENT_VERSION = "2.71.0";
     /**
      * Endpoint of the remote API.
      */
-    const API_ENDPOINT = "https://api.mollie.com";
+    public const API_ENDPOINT = "https://api.mollie.com";
     /**
      * Version of the remote API.
      */
-    const API_VERSION = "v2";
+    public const API_VERSION = "v2";
     /**
      * HTTP Methods
      */
-    const HTTP_GET = "GET";
-    const HTTP_POST = "POST";
-    const HTTP_DELETE = "DELETE";
-    const HTTP_PATCH = "PATCH";
+    public const HTTP_GET = "GET";
+    public const HTTP_POST = "POST";
+    public const HTTP_DELETE = "DELETE";
+    public const HTTP_PATCH = "PATCH";
     /**
-     * HTTP status codes
-     */
-    const HTTP_NO_CONTENT = 204;
-    /**
-     * Default response timeout (in seconds).
-     */
-    const TIMEOUT = 10;
-    /**
-     * Default connect timeout (in seconds).
-     */
-    const CONNECT_TIMEOUT = 2;
-    /**
-     * @var ClientInterface
+     * @var \Mollie\Api\HttpAdapter\MollieHttpAdapterInterface
      */
     protected $httpClient;
     /**
@@ -97,6 +93,10 @@ class MollieApiClient
      */
     public $profileMethods;
     /**
+     * @var \Mollie\Api\Endpoints\MethodIssuerEndpoint
+     */
+    public $methodIssuers;
+    /**
      * RESTful Customers resource.
      *
      * @var CustomerEndpoint
@@ -115,11 +115,29 @@ class MollieApiClient
      */
     public $settlements;
     /**
+     * RESTful Settlement capture resource.
+     *
+     * @var \Mollie\Api\Endpoints\SettlementCaptureEndpoint
+     */
+    public $settlementCaptures;
+    /**
+     * RESTful Settlement chargeback resource.
+     *
+     * @var \Mollie\Api\Endpoints\SettlementChargebackEndpoint
+     */
+    public $settlementChargebacks;
+    /**
      * RESTful Settlement payment resource.
      *
      * @var \Mollie\Api\Endpoints\SettlementPaymentEndpoint
      */
     public $settlementPayments;
+    /**
+     * RESTful Settlement refund resource.
+     *
+     * @var \Mollie\Api\Endpoints\SettlementRefundEndpoint
+     */
+    public $settlementRefunds;
     /**
      * RESTful Subscription resource.
      *
@@ -127,12 +145,20 @@ class MollieApiClient
      */
     public $subscriptions;
     /**
+     * RESTful Subscription Payments resource.
+     *
+     * @var SubscriptionPaymentEndpoint
+     */
+    public $subscriptionPayments;
+    /**
      * RESTful Mandate resource.
      *
      * @var MandateEndpoint
      */
     public $mandates;
     /**
+     * RESTful Profile resource.
+     *
      * @var ProfileEndpoint
      */
     public $profiles;
@@ -154,6 +180,20 @@ class MollieApiClient
      * @var InvoiceEndpoint
      */
     public $invoices;
+    /**
+     * RESTful Balance resource.
+     *
+     * @var BalanceEndpoint
+     */
+    public $balances;
+    /**
+     * @var BalanceTransactionEndpoint
+     */
+    public $balanceTransactions;
+    /**
+     * @var BalanceReportEndpoint
+     */
+    public $balanceReports;
     /**
      * RESTful Onboarding resource.
      *
@@ -197,6 +237,12 @@ class MollieApiClient
      */
     public $paymentRefunds;
     /**
+     * RESTful Payment Route resource.
+     *
+     * @var PaymentRouteEndpoint
+     */
+    public $paymentRoutes;
+    /**
      * RESTful Payment Captures resource.
      *
      * @var PaymentCaptureEndpoint
@@ -221,11 +267,47 @@ class MollieApiClient
      */
     public $orderRefunds;
     /**
+     * RESTful Payment Link Payment resource.
+     *
+     * @var PaymentLinkPaymentEndpoint
+     */
+    public $paymentLinkPayments;
+    /**
+     * Manages Payment Links requests
+     *
+     * @var PaymentLinkEndpoint
+     */
+    public $paymentLinks;
+    /**
+     * RESTful Terminal resource.
+     *
+     * @var TerminalEndpoint
+     */
+    public $terminals;
+    /**
+     * RESTful Onboarding resource.
+     *
+     * @var OrganizationPartnerEndpoint
+     */
+    public $organizationPartners;
+    /**
      * Manages Wallet requests
      *
      * @var WalletEndpoint
      */
     public $wallets;
+    /**
+     * RESTful Client resource.
+     *
+     * @var ClientEndpoint
+     */
+    public $clients;
+    /**
+     * RESTful Client resource.
+     *
+     * @var ClientLinkEndpoint
+     */
+    public $clientLinks;
     /**
      * @var string
      */
@@ -237,67 +319,95 @@ class MollieApiClient
      */
     protected $oauthAccess;
     /**
+     * A unique string ensuring a request to a mutating Mollie endpoint is processed only once.
+     * This key resets to null after each request.
+     *
+     * @var string|null
+     */
+    protected $idempotencyKey = null;
+    /**
+     * @var \Mollie\Api\Idempotency\IdempotencyKeyGeneratorContract|null
+     */
+    protected $idempotencyKeyGenerator;
+    /**
      * @var array
      */
     protected $versionStrings = [];
     /**
-     * @var int
+     * @param \GuzzleHttp\ClientInterface|\Mollie\Api\HttpAdapter\MollieHttpAdapterInterface|null $httpClient
+     * @param \Mollie\Api\HttpAdapter\MollieHttpAdapterPickerInterface|null $httpAdapterPicker,
+     * @param \Mollie\Api\Idempotency\IdempotencyKeyGeneratorContract $idempotencyKeyGenerator,
+     * @throws \Mollie\Api\Exceptions\IncompatiblePlatform|\Mollie\Api\Exceptions\UnrecognizedClientException
      */
-    protected $lastHttpResponseStatusCode;
-    /**
-     * @param ClientInterface $httpClient
-     *
-     * @throws IncompatiblePlatform
-     */
-    public function __construct(\_PhpScoper3234cdc49fbb\GuzzleHttp\ClientInterface $httpClient = null)
+    public function __construct($httpClient = null, $httpAdapterPicker = null, $idempotencyKeyGenerator = null)
     {
-        $this->httpClient = $httpClient;
-        if (!$this->httpClient) {
-            $retryMiddlewareFactory = new \Mollie\Api\Guzzle\RetryMiddlewareFactory();
-            $handlerStack = \_PhpScoper3234cdc49fbb\GuzzleHttp\HandlerStack::create();
-            $handlerStack->push($retryMiddlewareFactory->retry());
-            $this->httpClient = new \_PhpScoper3234cdc49fbb\GuzzleHttp\Client([\_PhpScoper3234cdc49fbb\GuzzleHttp\RequestOptions::VERIFY => \_PhpScoper3234cdc49fbb\Composer\CaBundle\CaBundle::getBundledCaBundlePath(), \_PhpScoper3234cdc49fbb\GuzzleHttp\RequestOptions::TIMEOUT => self::TIMEOUT, \_PhpScoper3234cdc49fbb\GuzzleHttp\RequestOptions::CONNECT_TIMEOUT => self::CONNECT_TIMEOUT, 'handler' => $handlerStack]);
-        }
+        $httpAdapterPicker = $httpAdapterPicker ?: new \Mollie\Api\HttpAdapter\MollieHttpAdapterPicker();
+        $this->httpClient = $httpAdapterPicker->pickHttpAdapter($httpClient);
         $compatibilityChecker = new \Mollie\Api\CompatibilityChecker();
         $compatibilityChecker->checkCompatibility();
         $this->initializeEndpoints();
-        $this->addVersionString("Mollie/" . self::CLIENT_VERSION);
-        $this->addVersionString("PHP/" . \phpversion());
-        if (\defined('\\GuzzleHttp\\ClientInterface::MAJOR_VERSION')) {
-            // Guzzle 7
-            $this->addVersionString("Guzzle/" . \_PhpScoper3234cdc49fbb\GuzzleHttp\ClientInterface::MAJOR_VERSION);
-        } elseif (\defined('\\GuzzleHttp\\ClientInterface::VERSION')) {
-            // Before Guzzle 7
-            $this->addVersionString("Guzzle/" . \_PhpScoper3234cdc49fbb\GuzzleHttp\ClientInterface::VERSION);
-        }
+        $this->initializeVersionStrings();
+        $this->initializeIdempotencyKeyGenerator($idempotencyKeyGenerator);
     }
     public function initializeEndpoints()
     {
-        $this->payments = new \Mollie\Api\Endpoints\PaymentEndpoint($this);
-        $this->methods = new \Mollie\Api\Endpoints\MethodEndpoint($this);
-        $this->profileMethods = new \Mollie\Api\Endpoints\ProfileMethodEndpoint($this);
-        $this->customers = new \Mollie\Api\Endpoints\CustomerEndpoint($this);
-        $this->settlements = new \Mollie\Api\Endpoints\SettlementsEndpoint($this);
-        $this->settlementPayments = new \Mollie\Api\Endpoints\SettlementPaymentEndpoint($this);
-        $this->subscriptions = new \Mollie\Api\Endpoints\SubscriptionEndpoint($this);
+        $this->balanceReports = new \Mollie\Api\Endpoints\BalanceReportEndpoint($this);
+        $this->balanceTransactions = new \Mollie\Api\Endpoints\BalanceTransactionEndpoint($this);
+        $this->balances = new \Mollie\Api\Endpoints\BalanceEndpoint($this);
+        $this->chargebacks = new \Mollie\Api\Endpoints\ChargebackEndpoint($this);
+        $this->clientLinks = new \Mollie\Api\Endpoints\ClientLinkEndpoint($this);
+        $this->clients = new \Mollie\Api\Endpoints\ClientEndpoint($this);
         $this->customerPayments = new \Mollie\Api\Endpoints\CustomerPaymentsEndpoint($this);
-        $this->mandates = new \Mollie\Api\Endpoints\MandateEndpoint($this);
+        $this->customers = new \Mollie\Api\Endpoints\CustomerEndpoint($this);
         $this->invoices = new \Mollie\Api\Endpoints\InvoiceEndpoint($this);
-        $this->permissions = new \Mollie\Api\Endpoints\PermissionEndpoint($this);
-        $this->profiles = new \Mollie\Api\Endpoints\ProfileEndpoint($this);
+        $this->mandates = new \Mollie\Api\Endpoints\MandateEndpoint($this);
+        $this->methods = new \Mollie\Api\Endpoints\MethodEndpoint($this);
+        $this->methodIssuers = new \Mollie\Api\Endpoints\MethodIssuerEndpoint($this);
         $this->onboarding = new \Mollie\Api\Endpoints\OnboardingEndpoint($this);
-        $this->organizations = new \Mollie\Api\Endpoints\OrganizationEndpoint($this);
-        $this->orders = new \Mollie\Api\Endpoints\OrderEndpoint($this);
         $this->orderLines = new \Mollie\Api\Endpoints\OrderLineEndpoint($this);
         $this->orderPayments = new \Mollie\Api\Endpoints\OrderPaymentEndpoint($this);
         $this->orderRefunds = new \Mollie\Api\Endpoints\OrderRefundEndpoint($this);
-        $this->shipments = new \Mollie\Api\Endpoints\ShipmentEndpoint($this);
-        $this->refunds = new \Mollie\Api\Endpoints\RefundEndpoint($this);
-        $this->paymentRefunds = new \Mollie\Api\Endpoints\PaymentRefundEndpoint($this);
+        $this->orders = new \Mollie\Api\Endpoints\OrderEndpoint($this);
+        $this->organizationPartners = new \Mollie\Api\Endpoints\OrganizationPartnerEndpoint($this);
+        $this->organizations = new \Mollie\Api\Endpoints\OrganizationEndpoint($this);
         $this->paymentCaptures = new \Mollie\Api\Endpoints\PaymentCaptureEndpoint($this);
-        $this->chargebacks = new \Mollie\Api\Endpoints\ChargebackEndpoint($this);
         $this->paymentChargebacks = new \Mollie\Api\Endpoints\PaymentChargebackEndpoint($this);
+        $this->paymentLinkPayments = new \Mollie\Api\Endpoints\PaymentLinkPaymentEndpoint($this);
+        $this->paymentLinks = new \Mollie\Api\Endpoints\PaymentLinkEndpoint($this);
+        $this->paymentRefunds = new \Mollie\Api\Endpoints\PaymentRefundEndpoint($this);
+        $this->paymentRoutes = new \Mollie\Api\Endpoints\PaymentRouteEndpoint($this);
+        $this->payments = new \Mollie\Api\Endpoints\PaymentEndpoint($this);
+        $this->permissions = new \Mollie\Api\Endpoints\PermissionEndpoint($this);
+        $this->profileMethods = new \Mollie\Api\Endpoints\ProfileMethodEndpoint($this);
+        $this->profiles = new \Mollie\Api\Endpoints\ProfileEndpoint($this);
+        $this->refunds = new \Mollie\Api\Endpoints\RefundEndpoint($this);
+        $this->settlementCaptures = new \Mollie\Api\Endpoints\SettlementCaptureEndpoint($this);
+        $this->settlementChargebacks = new \Mollie\Api\Endpoints\SettlementChargebackEndpoint($this);
+        $this->settlementPayments = new \Mollie\Api\Endpoints\SettlementPaymentEndpoint($this);
+        $this->settlementRefunds = new \Mollie\Api\Endpoints\SettlementRefundEndpoint($this);
+        $this->settlements = new \Mollie\Api\Endpoints\SettlementsEndpoint($this);
+        $this->shipments = new \Mollie\Api\Endpoints\ShipmentEndpoint($this);
+        $this->subscriptionPayments = new \Mollie\Api\Endpoints\SubscriptionPaymentEndpoint($this);
+        $this->subscriptions = new \Mollie\Api\Endpoints\SubscriptionEndpoint($this);
+        $this->terminals = new \Mollie\Api\Endpoints\TerminalEndpoint($this);
         $this->wallets = new \Mollie\Api\Endpoints\WalletEndpoint($this);
+    }
+    protected function initializeVersionStrings()
+    {
+        $this->addVersionString("Mollie/" . self::CLIENT_VERSION);
+        $this->addVersionString("PHP/" . \phpversion());
+        $httpClientVersionString = $this->httpClient->versionString();
+        if ($httpClientVersionString) {
+            $this->addVersionString($httpClientVersionString);
+        }
+    }
+    /**
+     * @param \Mollie\Api\Idempotency\IdempotencyKeyGeneratorContract $generator
+     * @return void
+     */
+    protected function initializeIdempotencyKeyGenerator($generator)
+    {
+        $this->idempotencyKeyGenerator = $generator ? $generator : new \Mollie\Api\Idempotency\DefaultIdempotencyKeyGenerator();
     }
     /**
      * @param string $url
@@ -315,6 +425,13 @@ class MollieApiClient
     public function getApiEndpoint()
     {
         return $this->apiEndpoint;
+    }
+    /**
+     * @return array
+     */
+    public function getVersionStrings()
+    {
+        return $this->versionStrings;
     }
     /**
      * @param string $apiKey The Mollie API key, starting with 'test_' or 'live_'
@@ -368,12 +485,88 @@ class MollieApiClient
         return $this;
     }
     /**
-     * Perform an http call. This method is used by the resource specific classes. Please use the $payments property to
+     * Enable debugging mode. If debugging mode is enabled, the attempted request will be included in the ApiException.
+     * By default, debugging is disabled to prevent leaking sensitive request data into exception logs.
+     *
+     * @throws \Mollie\Api\Exceptions\HttpAdapterDoesNotSupportDebuggingException
+     */
+    public function enableDebugging()
+    {
+        if (!\method_exists($this->httpClient, 'supportsDebugging') || !$this->httpClient->supportsDebugging()) {
+            throw new \Mollie\Api\Exceptions\HttpAdapterDoesNotSupportDebuggingException("Debugging is not supported by " . \get_class($this->httpClient) . ".");
+        }
+        $this->httpClient->enableDebugging();
+    }
+    /**
+     * Disable debugging mode. If debugging mode is enabled, the attempted request will be included in the ApiException.
+     * By default, debugging is disabled to prevent leaking sensitive request data into exception logs.
+     *
+     * @throws \Mollie\Api\Exceptions\HttpAdapterDoesNotSupportDebuggingException
+     */
+    public function disableDebugging()
+    {
+        if (!\method_exists($this->httpClient, 'supportsDebugging') || !$this->httpClient->supportsDebugging()) {
+            throw new \Mollie\Api\Exceptions\HttpAdapterDoesNotSupportDebuggingException("Debugging is not supported by " . \get_class($this->httpClient) . ".");
+        }
+        $this->httpClient->disableDebugging();
+    }
+    /**
+     * Set the idempotency key used on the next request. The idempotency key is a unique string ensuring a request to a
+     * mutating Mollie endpoint is processed only once. The idempotency key resets to null after each request. Using
+     * the setIdempotencyKey method supersedes the IdempotencyKeyGenerator.
+     *
+     * @param $key
+     * @return $this
+     */
+    public function setIdempotencyKey($key)
+    {
+        $this->idempotencyKey = $key;
+        return $this;
+    }
+    /**
+     * Retrieve the idempotency key. The idempotency key is a unique string ensuring a request to a
+     * mutating Mollie endpoint is processed only once. Note that the idempotency key gets reset to null after each
+     * request.
+     *
+     * @return string|null
+     */
+    public function getIdempotencyKey()
+    {
+        return $this->idempotencyKey;
+    }
+    /**
+     * Reset the idempotency key. Note that the idempotency key automatically resets to null after each request.
+     * @return $this
+     */
+    public function resetIdempotencyKey()
+    {
+        $this->idempotencyKey = null;
+        return $this;
+    }
+    /**
+     * @param \Mollie\Api\Idempotency\IdempotencyKeyGeneratorContract $generator
+     * @return \Mollie\Api\MollieApiClient
+     */
+    public function setIdempotencyKeyGenerator($generator)
+    {
+        $this->idempotencyKeyGenerator = $generator;
+        return $this;
+    }
+    /**
+     * @return \Mollie\Api\MollieApiClient
+     */
+    public function clearIdempotencyKeyGenerator()
+    {
+        $this->idempotencyKeyGenerator = null;
+        return $this;
+    }
+    /**
+     * Perform a http call. This method is used by the resource specific classes. Please use the $payments property to
      * perform operations on payments.
      *
      * @param string $httpMethod
      * @param string $apiMethod
-     * @param string|null|resource|StreamInterface $httpBody
+     * @param string|null $httpBody
      *
      * @return \stdClass
      * @throws ApiException
@@ -386,14 +579,14 @@ class MollieApiClient
         return $this->performHttpCallToFullUrl($httpMethod, $url, $httpBody);
     }
     /**
-     * Perform an http call to a full url. This method is used by the resource specific classes.
+     * Perform a http call to a full url. This method is used by the resource specific classes.
      *
      * @see $payments
      * @see $isuers
      *
      * @param string $httpMethod
      * @param string $url
-     * @param string|null|resource|StreamInterface $httpBody
+     * @param string|null $httpBody
      *
      * @return \stdClass|null
      * @throws ApiException
@@ -410,44 +603,40 @@ class MollieApiClient
             $userAgent .= " OAuth/2.0";
         }
         $headers = ['Accept' => "application/json", 'Authorization' => "Bearer {$this->apiKey}", 'User-Agent' => $userAgent];
+        if ($httpBody !== null) {
+            $headers['Content-Type'] = "application/json";
+        }
         if (\function_exists("php_uname")) {
             $headers['X-Mollie-Client-Info'] = \php_uname();
         }
-        $request = new \_PhpScoper3234cdc49fbb\GuzzleHttp\Psr7\Request($httpMethod, $url, $headers, $httpBody);
-        try {
-            $response = $this->httpClient->send($request, ['http_errors' => \false]);
-        } catch (\_PhpScoper3234cdc49fbb\GuzzleHttp\Exception\GuzzleException $e) {
-            throw \Mollie\Api\Exceptions\ApiException::createFromGuzzleException($e, $request);
-        }
-        if (!$response) {
-            throw new \Mollie\Api\Exceptions\ApiException("Did not receive API response.", 0, null, $request);
-        }
-        return $this->parseResponseBody($response);
+        $headers = $this->applyIdempotencyKey($headers, $httpMethod);
+        $response = $this->httpClient->send($httpMethod, $url, $headers, $httpBody);
+        $this->resetIdempotencyKey();
+        return $response;
     }
     /**
-     * Parse the PSR-7 Response body
+     * Conditionally apply the idempotency key to the request headers
      *
-     * @param ResponseInterface $response
-     * @return \stdClass|null
-     * @throws ApiException
+     * @param array $headers
+     * @param string $httpMethod
+     * @return array
      */
-    private function parseResponseBody(\_PhpScoper3234cdc49fbb\Psr\Http\Message\ResponseInterface $response)
+    private function applyIdempotencyKey(array $headers, string $httpMethod)
     {
-        $body = (string) $response->getBody();
-        if (empty($body)) {
-            if ($response->getStatusCode() === self::HTTP_NO_CONTENT) {
-                return null;
-            }
-            throw new \Mollie\Api\Exceptions\ApiException("No response body found.");
+        if (!\in_array($httpMethod, [self::HTTP_POST, self::HTTP_PATCH, self::HTTP_DELETE])) {
+            unset($headers['Idempotency-Key']);
+            return $headers;
         }
-        $object = @\json_decode($body);
-        if (\json_last_error() !== \JSON_ERROR_NONE) {
-            throw new \Mollie\Api\Exceptions\ApiException("Unable to decode Mollie response: '{$body}'.");
+        if ($this->idempotencyKey) {
+            $headers['Idempotency-Key'] = $this->idempotencyKey;
+            return $headers;
         }
-        if ($response->getStatusCode() >= 400) {
-            throw \Mollie\Api\Exceptions\ApiException::createFromResponse($response, null);
+        if ($this->idempotencyKeyGenerator) {
+            $headers['Idempotency-Key'] = $this->idempotencyKeyGenerator->generate();
+            return $headers;
         }
-        return $object;
+        unset($headers['Idempotency-Key']);
+        return $headers;
     }
     /**
      * Serialization can be used for caching. Of course doing so can be dangerous but some like to live dangerously.
@@ -469,8 +658,7 @@ class MollieApiClient
     /**
      * When unserializing a collection or a resource, this class should restore itself.
      *
-     * Note that if you use a custom GuzzleClient, this client is lost. You can't re set the Client, so you should
-     * probably not use this feature.
+     * Note that if you have set an HttpAdapter, this adapter is lost on wakeup and reset to the default one.
      *
      * @throws IncompatiblePlatform If suddenly unserialized on an incompatible platform.
      */
