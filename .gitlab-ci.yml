@@ -1,11 +1,7 @@
-cache:
-  paths:
-    - $HOME/.composer/cache
-    - $HOME/.npm
-
 stages:
   - test
   - deploy
+  - release
 
 variables:
   DB: "mysqli"
