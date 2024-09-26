@@ -1,6 +1,3 @@
-services:
-  - mysql:5.7
-
 cache:
   paths:
     - $HOME/.composer/cache
