@@ -23,10 +23,6 @@ variables:
   # If we want to ignore some templates, provide them here.
   #MUSTACHE_IGNORE_NAMES: "<file>.mustache, <file2>.mustache, ..., <filen>.mustache"
 
-before_script:
-  # Update packages and install git, mysql-client and npm.
-  - apt update && apt install -y git default-mysql-client npm
-
 .job_template: &job_definition
   stage: test
   services:
