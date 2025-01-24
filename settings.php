@@ -35,4 +35,11 @@ if ($ADMIN->fulltree) {
 
     \core_payment\helper::add_common_gateway_settings($settings, 'paygw_mollie');
 
+    $settings->add(new admin_setting_configcheckbox(
+        'paygw_mollie/useinternalzeropayments',
+        get_string('setting:useinternalzeropayments', 'paygw_mollie'),
+        get_string('setting:useinternalzeropayments_help', 'paygw_mollie'),
+        1
+    ));
+
 }

@@ -263,10 +263,10 @@ class MollieApiClient
         $this->initializeEndpoints();
         $this->addVersionString("Mollie/" . self::CLIENT_VERSION);
         $this->addVersionString("PHP/" . \phpversion());
-        if (\defined('\\GuzzleHttp\\ClientInterface::MAJOR_VERSION')) {
+        if (\defined('\\_PhpScoper3234cdc49fbb\\GuzzleHttp\\ClientInterface::MAJOR_VERSION')) {
             // Guzzle 7
             $this->addVersionString("Guzzle/" . \_PhpScoper3234cdc49fbb\GuzzleHttp\ClientInterface::MAJOR_VERSION);
-        } elseif (\defined('\\GuzzleHttp\\ClientInterface::VERSION')) {
+        } elseif (\defined('\\_PhpScoper3234cdc49fbb\\GuzzleHttp\\ClientInterface::VERSION')) {
             // Before Guzzle 7
             $this->addVersionString("Guzzle/" . \_PhpScoper3234cdc49fbb\GuzzleHttp\ClientInterface::VERSION);
         }

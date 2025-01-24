@@ -203,4 +203,48 @@ class mollie_helper {
         return $url;
     }
 
+    /**
+     * Process zero payment.
+     *
+     * @param string $component
+     * @param string $paymentarea
+     * @param int $itemid
+     * @param int $userid
+     * @return bool
+     */
+    public static function process_zero_payment(string $component, string $paymentarea, int $itemid, int $userid) {
+        global $DB;
+
+        $config = (object) helper::get_gateway_configuration($component, $paymentarea, $itemid, 'mollie');
+        $payable = helper::get_payable($component, $paymentarea, $itemid);
+        $surcharge = helper::get_gateway_surcharge('mollie');
+
+        $currency = $payable->get_currency();
+        $amount = \core_payment\helper::get_rounded_cost($payable->get_amount(), $currency, $surcharge);
+
+        // Save (zero)payment.
+        $paymentid = \core_payment\helper::save_payment($payable->get_account_id(), $component,
+                $paymentarea, $itemid, $userid, $amount, $currency, 'mollie');
+
+        // Typical filth: we want to be able to refer the record to the payment.
+        // So we create the record, create the payment and then update the record again.
+        $time = time();
+        $record = (object) [
+            'userid' => $userid,
+            'paymentid' => $paymentid,
+            'component' => $component,
+            'paymentarea' => $paymentarea,
+            'itemid' => $itemid,
+            'orderid' => -1,
+            'status' => 'ZEROPAYMENT',
+            'testmode' => empty($config->testmode) ? 0 : 1,
+            'timecreated' => $time,
+            'timemodified' => $time
+        ];
+        $record->id = $DB->insert_record('paygw_mollie', $record);
+
+        // Deliver ORDER.
+        return \core_payment\helper::deliver_order($component, $paymentarea, $itemid, $paymentid, $userid);
+    }
+
 }

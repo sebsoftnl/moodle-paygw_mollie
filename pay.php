@@ -58,6 +58,16 @@ $surcharge = helper::get_gateway_surcharge('mollie');
 
 $PAGE->requires->js_call_amd('paygw_mollie/startpayment', 'startPayment', ['[data-action="mollie-startpayment"]']);
 
+if ((float)$payable->get_amount() < 0.01) {
+    // This is a zero payment.
+    if ((bool)get_config('paygw_mollie', 'useinternalzeropayments')) {
+        // Process this zero payment.
+        \paygw_mollie\mollie_helper::process_zero_payment($component, $paymentarea, $itemid, $USER->id);
+        // And redirect.
+        redirect(\paygw_mollie\mollie_helper::determine_redirect_url($component, $paymentarea, $itemid));
+    }
+}
+
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('selectpaymentmethod', 'paygw_mollie'), 2);
 echo '<div>' . get_string('selectpaymentmethod_help', 'paygw_mollie') . '</div>';
