@@ -38,7 +38,6 @@ $params = [
     'paymentarea' => required_param('paymentarea', PARAM_AREA),
     'itemid' => required_param('itemid', PARAM_INT),
     'internalid' => required_param('internalid', PARAM_INT),
-    'mollieid' => required_param('id', PARAM_RAW),
 ];
 
 $context = context_system::instance();
@@ -52,10 +51,9 @@ $PAGE->set_heading($pagetitle);
 // Instant, we want this AS QUICK as we can.
 try {
     // Callback is provided with internal record ID to match OUR record.
-    $transactionrecord = $DB->get_record('paygw_mollie', ['id' => $params['internalid'],
-        'orderid' => $params['mollieid']], '*', MUST_EXIST);
+    $transactionrecord = $DB->get_record('paygw_mollie', ['id' => $params['internalid']], '*', MUST_EXIST);
     // Verify record.
-    mollie_helper::assert_payment_record_variables($molliepaymentrecord,
+    mollie_helper::assert_payment_record_variables($transactionrecord,
             $params['component'], $params['paymentarea'], $params['itemid']);
     // And sycnhronize status.
     mollie_helper::synchronize_status(null, $transactionrecord);
