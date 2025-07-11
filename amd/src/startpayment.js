@@ -16,7 +16,6 @@
 /**
  * Payment implementation for mollie system.
  *
- * @package    paygw_mollie
  * @module     paygw_mollie/startpayment
  * @copyright  2021 Ing. R.J. van Dongen <rogier@sebsoft.nl>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
