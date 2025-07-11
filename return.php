@@ -38,7 +38,7 @@ $params = [
     'component' => required_param('component', PARAM_COMPONENT),
     'paymentarea' => required_param('paymentarea', PARAM_AREA),
     'itemid' => required_param('itemid', PARAM_INT),
-    'internalid' => required_param('internalid', PARAM_INT)
+    'internalid' => required_param('internalid', PARAM_INT),
 ];
 
 require_login();

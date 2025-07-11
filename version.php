@@ -29,10 +29,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2024090101;
-$plugin->requires  = 2021051700; // 3.11+
+$plugin->version   = 2025061100;
+$plugin->requires  = 2024042200; // 4.4+
 $plugin->component = 'paygw_mollie';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = 'v1.0.2 (build 2024090101)';
-$plugin->supported = [311, 403];
-$plugin->incompatible = 404;
+$plugin->release = 'v1.0.3 (build 2025061100)';
+$plugin->supported = [404, 405];
+
