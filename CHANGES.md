@@ -1,3 +1,9 @@
+v1.0.3 (build 2025061100)
+** Some minor code changes
+** Ensured compatibility with Moodle 4.4+ (funded by Avetica BV)
+
+-----
+
 Version 1.0.2 (build 2024090100)
 
 ** Some minor code changes
