@@ -44,7 +44,7 @@ $params = [
     'component' => $component,
     'paymentarea' => $paymentarea,
     'itemid' => $itemid,
-    'description' => $description
+    'description' => $description,
 ];
 $PAGE->set_url('/payment/gateway/mollie/pay.php', $params);
 $PAGE->set_pagelayout('report');
@@ -76,9 +76,7 @@ $paymentmethods = \paygw_mollie\external::get_methods($component, $paymentarea, 
 if (count($paymentmethods) === 0) {
     echo \html_writer::div(get_string('err:nopaymentmethods', 'paygw_mollie'), 'alert alert-warning');
 } else {
-    $wcontext = (object)[
-        'methods' => array_values($paymentmethods)
-    ];
+    $wcontext = (object)['methods' => array_values($paymentmethods)];
     echo $OUTPUT->render_from_template('paygw_mollie/mollie_select_method', $wcontext);
     echo $OUTPUT->render_from_template('paygw_mollie/mollie_startpayment', (object)$params);
 }

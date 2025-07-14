@@ -31,18 +31,17 @@ declare(strict_types=1);
 
 namespace paygw_mollie;
 
-use external_api;
-use external_function_parameters;
-use external_value;
-use external_single_structure;
-use external_multiple_structure;
+use core_external\external_api;
+use core_external\external_function_parameters;
+use core_external\external_value;
+use core_external\external_single_structure;
+use core_external\external_multiple_structure;
 
 use core_payment\helper;
 use moodle_url;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->libdir . '/externallib.php');
 require_once($CFG->dirroot . '/payment/gateway/mollie/thirdparty/Mollie/vendor/autoload.php');
 
 /**
@@ -116,7 +115,7 @@ class external extends external_api {
                 'status' => $method->status,
                 'enabled' => $enabled,
                 'images' => $method->image,
-                'hasbanks' => 0 // Reserved for future use.
+                'hasbanks' => 0, // Reserved for future use.
             ];
         }
 
@@ -147,7 +146,7 @@ class external extends external_api {
                     'size1x' => new external_value(PARAM_URL, 'size 1X image'),
                     'size2x' => new external_value(PARAM_URL, 'size 2X image'),
                     'svg' => new external_value(PARAM_URL, 'SVG image', VALUE_OPTIONAL),
-                    ], 'images')
+                    ], 'images'),
             ])
         );
     }
@@ -160,12 +159,12 @@ class external extends external_api {
      * @param string $paymentarea
      * @param int $itemid An internal identifier that is used by the component
      * @param string $description
-     * @param string $paymentmethodid Payment method ID
-     * @param int $bankid bank identifier|reserved for future use
+     * @param string|null $paymentmethodid Payment method ID
+     * @param int|null $bankid bank identifier|reserved for future use
      * @return array
      */
     public static function create_payment(string $component, string $paymentarea, int $itemid,
-            string $description, string $paymentmethodid = null, int $bankid = null): array {
+            string $description, ?string $paymentmethodid = null, ?int $bankid = null): array {
         global $USER, $DB, $CFG;
 
         $params = self::validate_parameters(self::create_payment_parameters(), [
@@ -204,7 +203,7 @@ class external extends external_api {
                 'statuscode' => 0,
                 'testmode' => empty($config->testmode) ? 0 : 1,
                 'timecreated' => $time,
-                'timemodified' => $time
+                'timemodified' => $time,
             ];
             $record->id = $DB->insert_record('paygw_mollie', $record);
 
@@ -212,7 +211,7 @@ class external extends external_api {
                 'component' => $component,
                 'paymentarea' => $paymentarea,
                 'itemid' => $itemid,
-                'internalid' => $record->id
+                'internalid' => $record->id,
             ];
             $returnurl = new moodle_url($CFG->wwwroot . '/payment/gateway/mollie/return.php', $urlparams);
             $exchangeurl = new moodle_url($CFG->wwwroot . '/payment/gateway/mollie/xchange.php', $urlparams);
@@ -221,15 +220,15 @@ class external extends external_api {
             $paymentparams = [
                 'amount' => (object)[
                     'value' => format_float($amount, 2, false),
-                    'currency' => $currency
+                    'currency' => $currency,
                 ],
                 'description' => $description,
                 'redirectUrl' => $returnurl->out(false),
                 'webhookUrl' => $exchangeurl->out(false),
                 'metadata' => (object)[
                     'tool' => 'moodle/paygw_mollie-v'.get_config('paygw_mollie', 'version'),
-                    'extra1' => "{$component}|{$paymentarea}|{$itemid}|{$USER->id}"
-                ]
+                    'extra1' => "{$component}|{$paymentarea}|{$itemid}|{$USER->id}",
+                ],
             ];
             if (!empty($paymentmethodid)) {
                 $paymentparams['method'] = $paymentmethodid;

@@ -30,8 +30,6 @@
 
 namespace paygw_mollie\privacy;
 
-defined('MOODLE_INTERNAL') || die;
-
 use core_privacy\local\metadata\collection;
 use core_privacy\local\request\contextlist;
 use core_privacy\local\request\approved_contextlist;
@@ -62,7 +60,7 @@ class provider implements \core_privacy\local\metadata\provider,
      *
      * @return  string
      */
-    public static function get_reason() : string {
+    public static function get_reason(): string {
         return 'privacy:metadata';
     }
 
@@ -85,7 +83,7 @@ class provider implements \core_privacy\local\metadata\provider,
                         'status' => 'privacy:metadata:paygw_mollie:status',
                         'testmode' => 'privacy:metadata:paygw_mollie:testmode',
                         'timecreated' => 'privacy:metadata:paygw_mollie:timecreated',
-                        'timemodified' => 'privacy:metadata:paygw_mollie:timemodified'
+                        'timemodified' => 'privacy:metadata:paygw_mollie:timemodified',
                 ],
                 'privacy:metadata:paygw_mollie'
         );
@@ -129,7 +127,7 @@ class provider implements \core_privacy\local\metadata\provider,
             $alldata = [$context->id => []];
             $alluserdata = $DB->get_recordset_sql(
                     "SELECT * FROM {paygw_mollie} WHERE userid = :userid",
-                    array('userid' => $user->id)
+                    ['userid' => $user->id]
             );
             foreach ($alluserdata as $userdata) {
                 $alldata[$context->id][] = (object) [
@@ -141,7 +139,7 @@ class provider implements \core_privacy\local\metadata\provider,
                     'status' => $userdata->status,
                     'testmode' => transform::yesno($userdata->testmode),
                     'timecreated' => transform::datetime($userdata->timecreated),
-                    'timemodified' => transform::datetime($userdata->timemodified)
+                    'timemodified' => transform::datetime($userdata->timemodified),
                 ];
             }
             $alluserdata->close();

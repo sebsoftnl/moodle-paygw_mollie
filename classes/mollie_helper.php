@@ -34,6 +34,8 @@ use stdClass;
 use moodle_exception;
 use moodle_url;
 
+use Mollie\Api\Resources\Payment;
+
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/payment/gateway/mollie/thirdparty/Mollie/vendor/autoload.php');
@@ -90,8 +92,8 @@ class mollie_helper {
      * @return \Mollie\Api\Resources\Payment the Mollie transaction info.
      * @throws moodle_exception
      */
-    public static function synchronize_status(\Mollie\Api\Resources\Payment $transaction = null,
-            stdClass $transactionrecord = null) {
+    public static function synchronize_status(?Payment $transaction = null,
+            ?stdClass $transactionrecord = null) {
         global $DB;
 
         if ($transaction === null && $transactionrecord === null) {
@@ -239,7 +241,7 @@ class mollie_helper {
             'status' => 'ZEROPAYMENT',
             'testmode' => empty($config->testmode) ? 0 : 1,
             'timecreated' => $time,
-            'timemodified' => $time
+            'timemodified' => $time,
         ];
         $record->id = $DB->insert_record('paygw_mollie', $record);
 
