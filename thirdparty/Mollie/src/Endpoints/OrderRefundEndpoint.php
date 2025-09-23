@@ -52,12 +52,33 @@ class OrderRefundEndpoint extends \Mollie\Api\Endpoints\CollectionEndpointAbstra
      * @param array $data
      * @param array $filters
      *
-     * @return \Mollie\Api\Resources\BaseResource|\Mollie\Api\Resources\Refund
+     * @return \Mollie\Api\Resources\Refund
      * @throws \Mollie\Api\Exceptions\ApiException
      */
     public function createForId($orderId, array $data, array $filters = [])
     {
         $this->parentId = $orderId;
         return parent::rest_create($data, $filters);
+    }
+    /**
+     * @param $orderId
+     * @param array $parameters
+     * @return RefundCollection
+     * @throws \Mollie\Api\Exceptions\ApiException
+     */
+    public function pageForId($orderId, array $parameters = [])
+    {
+        $this->parentId = $orderId;
+        return parent::rest_list(null, null, $parameters);
+    }
+    /**
+     * @param \Mollie\Api\Resources\Order $order
+     * @param array $parameters
+     * @return \Mollie\Api\Resources\RefundCollection
+     * @throws \Mollie\Api\Exceptions\ApiException
+     */
+    public function pageFor(\Mollie\Api\Resources\Order $order, array $parameters = [])
+    {
+        return $this->pageForId($order->id, $parameters);
     }
 }

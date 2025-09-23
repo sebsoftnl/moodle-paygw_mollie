@@ -6,13 +6,14 @@ use Mollie\Api\Exceptions\ApiException;
 use Mollie\Api\Resources\Order;
 use Mollie\Api\Resources\OrderLine;
 use Mollie\Api\Resources\OrderLineCollection;
+use Mollie\Api\Resources\ResourceFactory;
 class OrderLineEndpoint extends \Mollie\Api\Endpoints\CollectionEndpointAbstract
 {
     protected $resourcePath = "orders_lines";
     /**
      * @var string
      */
-    const RESOURCE_ID_PREFIX = 'odl_';
+    public const RESOURCE_ID_PREFIX = 'odl_';
     /**
      * Get the object that is used by this API endpoint. Every API endpoint uses one
      * type of object.
@@ -35,6 +36,44 @@ class OrderLineEndpoint extends \Mollie\Api\Endpoints\CollectionEndpointAbstract
     protected function getResourceCollectionObject($count, $_links)
     {
         return new \Mollie\Api\Resources\OrderLineCollection($count, $_links);
+    }
+    /**
+     * Update a specific OrderLine resource.
+     *
+     * Will throw an ApiException if the order line id is invalid or the resource cannot be found.
+     *
+     * @param string|null $orderId
+     * @param string $orderlineId
+     *
+     * @param array $data
+     *
+     * @return \Mollie\Api\Resources\BaseResource|null
+     * @throws \Mollie\Api\Exceptions\ApiException
+     */
+    public function update($orderId, $orderlineId, array $data = [])
+    {
+        $this->parentId = $orderId;
+        if (empty($orderlineId) || \strpos($orderlineId, self::RESOURCE_ID_PREFIX) !== 0) {
+            throw new \Mollie\Api\Exceptions\ApiException("Invalid order line ID: '{$orderlineId}'. An order line ID should start with '" . self::RESOURCE_ID_PREFIX . "'.");
+        }
+        return parent::rest_update($orderlineId, $data);
+    }
+    /**
+     * @param string $orderId
+     * @param array $operations
+     * @param array $parameters
+     * @return Order|\Mollie\Api\Resources\BaseResource
+     * @throws \Mollie\Api\Exceptions\ApiException
+     */
+    public function updateMultiple(string $orderId, array $operations, array $parameters = [])
+    {
+        if (empty($orderId)) {
+            throw new \Mollie\Api\Exceptions\ApiException("Invalid resource id.");
+        }
+        $this->parentId = $orderId;
+        $parameters['operations'] = $operations;
+        $result = $this->client->performHttpCall(self::REST_UPDATE, "{$this->getResourcePath()}", $this->parseRequestBody($parameters));
+        return \Mollie\Api\Resources\ResourceFactory::createFromApiResult($result, new \Mollie\Api\Resources\Order($this->client));
     }
     /**
      * Cancel lines for the provided order.

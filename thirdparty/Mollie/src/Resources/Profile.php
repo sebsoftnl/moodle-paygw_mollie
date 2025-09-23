@@ -10,10 +10,6 @@ class Profile extends \Mollie\Api\Resources\BaseResource
     /**
      * @var string
      */
-    public $resource;
-    /**
-     * @var string
-     */
     public $id;
     /**
      * Test or live mode
@@ -39,10 +35,18 @@ class Profile extends \Mollie\Api\Resources\BaseResource
     public $phone;
     /**
      * See https://docs.mollie.com/reference/v2/profiles-api/get-profile
+     * This parameter is deprecated and will be removed in 2022. Please use the businessCategory parameter instead.
      *
-     * @var int
+     * @deprecated
+     * @var int|null
      */
     public $categoryCode;
+    /**
+     * See https://docs.mollie.com/reference/v2/profiles-api/get-profile
+     *
+     * @var string|null
+     */
+    public $businessCategory;
     /**
      * @var string
      */
@@ -84,16 +88,13 @@ class Profile extends \Mollie\Api\Resources\BaseResource
         return $this->status == \Mollie\Api\Types\ProfileStatus::STATUS_BLOCKED;
     }
     /**
-     * @return Profile
+     * @return \Mollie\Api\Resources\Profile
      * @throws ApiException
      */
     public function update()
     {
-        if (!isset($this->_links->self->href)) {
-            return $this;
-        }
-        $body = \json_encode(["name" => $this->name, "website" => $this->website, "email" => $this->email, "phone" => $this->phone, "categoryCode" => $this->categoryCode, "mode" => $this->mode]);
-        $result = $this->client->performHttpCallToFullUrl(\Mollie\Api\MollieApiClient::HTTP_PATCH, $this->_links->self->href, $body);
+        $body = ["name" => $this->name, "website" => $this->website, "email" => $this->email, "phone" => $this->phone, "businessCategory" => $this->businessCategory, "mode" => $this->mode];
+        $result = $this->client->profiles->update($this->id, $body);
         return \Mollie\Api\Resources\ResourceFactory::createFromApiResult($result, new \Mollie\Api\Resources\Profile($this->client));
     }
     /**

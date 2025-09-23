@@ -3,8 +3,6 @@
 namespace Mollie\Api\Exceptions;
 
 use DateTime;
-use _PhpScoper3234cdc49fbb\Psr\Http\Message\RequestInterface;
-use _PhpScoper3234cdc49fbb\Psr\Http\Message\ResponseInterface;
 class ApiException extends \Exception
 {
     /**
@@ -12,11 +10,15 @@ class ApiException extends \Exception
      */
     protected $field;
     /**
-     * @var RequestInterface
+     * @var string
+     */
+    protected $plainMessage;
+    /**
+     * @var \Psr\Http\Message\RequestInterface|null
      */
     protected $request;
     /**
-     * @var ResponseInterface
+     * @var \Psr\Http\Message\ResponseInterface|null
      */
     protected $response;
     /**
@@ -33,13 +35,14 @@ class ApiException extends \Exception
      * @param string $message
      * @param int $code
      * @param string|null $field
-     * @param RequestInterface|null $request
-     * @param ResponseInterface|null $response
+     * @param \Psr\Http\Message\RequestInterface|null $request
+     * @param \Psr\Http\Message\ResponseInterface|null $response
      * @param \Throwable|null $previous
      * @throws \Mollie\Api\Exceptions\ApiException
      */
-    public function __construct($message = "", $code = 0, $field = null, \_PhpScoper3234cdc49fbb\Psr\Http\Message\RequestInterface $request = null, \_PhpScoper3234cdc49fbb\Psr\Http\Message\ResponseInterface $response = null, $previous = null)
+    public function __construct($message = "", $code = 0, $field = null, $request = null, $response = null, $previous = null)
     {
+        $this->plainMessage = $message;
         $this->raisedAt = new \DateTimeImmutable();
         $formattedRaisedAt = $this->raisedAt->format(\DateTime::ISO8601);
         $message = "[{$formattedRaisedAt}] " . $message;
@@ -69,30 +72,13 @@ class ApiException extends \Exception
         parent::__construct($message, $code, $previous);
     }
     /**
-     * @param \GuzzleHttp\Exception\GuzzleException $guzzleException
-     * @param RequestInterface|null $request
+     * @param \Psr\Http\Message\ResponseInterface $response
+     * @param \Psr\Http\Message\RequestInterface $request
      * @param \Throwable|null $previous
      * @return \Mollie\Api\Exceptions\ApiException
      * @throws \Mollie\Api\Exceptions\ApiException
      */
-    public static function createFromGuzzleException($guzzleException, $request = null, $previous = null)
-    {
-        // Not all Guzzle Exceptions implement hasResponse() / getResponse()
-        if (\method_exists($guzzleException, 'hasResponse') && \method_exists($guzzleException, 'getResponse')) {
-            if ($guzzleException->hasResponse()) {
-                return static::createFromResponse($guzzleException->getResponse(), $request, $previous);
-            }
-        }
-        return new self($guzzleException->getMessage(), $guzzleException->getCode(), null, $request, null, $previous);
-    }
-    /**
-     * @param ResponseInterface $response
-     * @param RequestInterface $request
-     * @param \Throwable|null $previous
-     * @return \Mollie\Api\Exceptions\ApiException
-     * @throws \Mollie\Api\Exceptions\ApiException
-     */
-    public static function createFromResponse(\_PhpScoper3234cdc49fbb\Psr\Http\Message\ResponseInterface $response, \_PhpScoper3234cdc49fbb\Psr\Http\Message\RequestInterface $request = null, $previous = null)
+    public static function createFromResponse($response, $request = null, $previous = null)
     {
         $object = static::parseResponseBody($response);
         $field = null;
@@ -123,7 +109,7 @@ class ApiException extends \Exception
         return $this->getUrl('dashboard');
     }
     /**
-     * @return ResponseInterface|null
+     * @return \Psr\Http\Message\ResponseInterface|null
      */
     public function getResponse()
     {
@@ -137,7 +123,7 @@ class ApiException extends \Exception
         return $this->response !== null;
     }
     /**
-     * @param $key
+     * @param string $key
      * @return bool
      */
     public function hasLink($key)
@@ -145,7 +131,7 @@ class ApiException extends \Exception
         return \array_key_exists($key, $this->links);
     }
     /**
-     * @param $key
+     * @param string $key
      * @return mixed|null
      */
     public function getLink($key)
@@ -156,7 +142,7 @@ class ApiException extends \Exception
         return null;
     }
     /**
-     * @param $key
+     * @param string $key
      * @return null
      */
     public function getUrl($key)
@@ -167,7 +153,7 @@ class ApiException extends \Exception
         return null;
     }
     /**
-     * @return RequestInterface
+     * @return \Psr\Http\Message\RequestInterface
      */
     public function getRequest()
     {
@@ -183,8 +169,8 @@ class ApiException extends \Exception
         return $this->raisedAt;
     }
     /**
-     * @param ResponseInterface $response
-     * @return mixed
+     * @param \Psr\Http\Message\ResponseInterface $response
+     * @return \stdClass
      * @throws \Mollie\Api\Exceptions\ApiException
      */
     protected static function parseResponseBody($response)
@@ -195,5 +181,14 @@ class ApiException extends \Exception
             throw new self("Unable to decode Mollie response: '{$body}'.");
         }
         return $object;
+    }
+    /**
+     * Retrieve the plain exception message.
+     *
+     * @return string
+     */
+    public function getPlainMessage()
+    {
+        return $this->plainMessage;
     }
 }

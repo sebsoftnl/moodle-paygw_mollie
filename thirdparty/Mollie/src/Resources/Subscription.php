@@ -9,10 +9,6 @@ class Subscription extends \Mollie\Api\Resources\BaseResource
     /**
      * @var string
      */
-    public $resource;
-    /**
-     * @var string
-     */
     public $id;
     /**
      * @var string
@@ -43,6 +39,10 @@ class Subscription extends \Mollie\Api\Resources\BaseResource
      */
     public $times;
     /**
+     * @var int|null
+     */
+    public $timesRemaining;
+    /**
      * @var string
      */
     public $interval;
@@ -59,7 +59,7 @@ class Subscription extends \Mollie\Api\Resources\BaseResource
      */
     public $mandateId;
     /**
-     * @var array|null
+     * @var \stdClass|null
      */
     public $metadata;
     /**
@@ -81,20 +81,23 @@ class Subscription extends \Mollie\Api\Resources\BaseResource
      */
     public $webhookUrl;
     /**
+     * Date the next subscription payment will take place. For example: 2018-04-24
+     *
+     * @var string|null
+     */
+    public $nextPaymentDate;
+    /**
      * @var \stdClass
      */
     public $_links;
     /**
-     * @return BaseResource|Subscription
+     * @return Subscription
      * @throws \Mollie\Api\Exceptions\ApiException
      */
     public function update()
     {
-        if (!isset($this->_links->self->href)) {
-            return $this;
-        }
-        $body = \json_encode(["amount" => $this->amount, "times" => $this->times, "startDate" => $this->startDate, "webhookUrl" => $this->webhookUrl, "description" => $this->description, "mandateId" => $this->mandateId, "metadata" => $this->metadata, "interval" => $this->interval]);
-        $result = $this->client->performHttpCallToFullUrl(\Mollie\Api\MollieApiClient::HTTP_PATCH, $this->_links->self->href, $body);
+        $body = ["amount" => $this->amount, "times" => $this->times, "startDate" => $this->startDate, "webhookUrl" => $this->webhookUrl, "description" => $this->description, "mandateId" => $this->mandateId, "metadata" => $this->metadata, "interval" => $this->interval];
+        $result = $this->client->subscriptions->update($this->customerId, $this->id, $body);
         return \Mollie\Api\Resources\ResourceFactory::createFromApiResult($result, new \Mollie\Api\Resources\Subscription($this->client));
     }
     /**
@@ -146,6 +149,7 @@ class Subscription extends \Mollie\Api\Resources\BaseResource
      * Cancels this subscription
      *
      * @return Subscription
+     * @throws \Mollie\Api\Exceptions\ApiException
      */
     public function cancel()
     {
@@ -159,6 +163,12 @@ class Subscription extends \Mollie\Api\Resources\BaseResource
         $result = $this->client->performHttpCallToFullUrl(\Mollie\Api\MollieApiClient::HTTP_DELETE, $this->_links->self->href, $body);
         return \Mollie\Api\Resources\ResourceFactory::createFromApiResult($result, new \Mollie\Api\Resources\Subscription($this->client));
     }
+    /**
+     * Get subscription payments
+     *
+     * @return \Mollie\Api\Resources\PaymentCollection
+     * @throws \Mollie\Api\Exceptions\ApiException
+     */
     public function payments()
     {
         if (!isset($this->_links->payments->href)) {

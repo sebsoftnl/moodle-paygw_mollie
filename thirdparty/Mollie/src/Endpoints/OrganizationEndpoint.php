@@ -3,7 +3,6 @@
 namespace Mollie\Api\Endpoints;
 
 use Mollie\Api\Exceptions\ApiException;
-use Mollie\Api\Resources\Method;
 use Mollie\Api\Resources\Organization;
 use Mollie\Api\Resources\OrganizationCollection;
 class OrganizationEndpoint extends \Mollie\Api\Endpoints\CollectionEndpointAbstract
@@ -35,7 +34,7 @@ class OrganizationEndpoint extends \Mollie\Api\Endpoints\CollectionEndpointAbstr
      *
      * @param string $organizationId
      * @param array $parameters
-     * @return Method
+     * @return Organization
      * @throws ApiException
      */
     public function get($organizationId, array $parameters = [])
@@ -49,7 +48,7 @@ class OrganizationEndpoint extends \Mollie\Api\Endpoints\CollectionEndpointAbstr
      * Retrieve the current organization from Mollie.
      *
      * @param array $parameters
-     * @return Method
+     * @return Organization
      * @throws ApiException
      */
     public function current(array $parameters = [])
