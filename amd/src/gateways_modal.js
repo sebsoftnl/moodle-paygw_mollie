@@ -17,7 +17,7 @@
  * This module is responsible for Mollie content in the gateways modal.
  *
  * @module     paygw_mollie/gateways_modal
- * @copyright   2021 Ing. R.J. van Dongen
+ * @copyright  2021 RvD
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

@@ -22,8 +22,8 @@
  *
  * @package     paygw_mollie
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -34,6 +34,7 @@ $string['apikeytest_help'] = 'Test API Key - this is the API key as provided by 
 $string['cannotprocessstatus'] = 'Your payment has a status we cannot (yet) process. Please contact system administrator';
 $string['err:assert:paymentrecordvariables'] = 'Invalid request: one or more paymentrecord variables do not match with the intended component, paymentarea or itemid';
 $string['err:nopaymentmethods'] = 'You don\'t have any payment methods enabled for Mollie.';
+$string['err:return:useridcheck'] = 'Payment not found.';
 $string['err:synchronizestatus:args:invalid'] = 'Provide either the Mollie transaction, the internal record or both.';
 $string['err:validatetransaction:component'] = 'Transaction invalid: component mismatch';
 $string['err:validatetransaction:itemid'] = 'Transaction invalid: itemid mismatch';
@@ -44,8 +45,20 @@ $string['gatewayname'] = 'Mollie';
 $string['internalerror'] = 'An internal error has occurred. Please contact the system administrator.';
 $string['payment:returnpage'] = 'Processing payment status.';
 $string['paymentalreadypaid'] = 'Payment already performed';
+$string['paymentauthorized'] = 'Your payment was authorized. This typically indicates your payment status (and delivery) will be updated later.';
+$string['paymentcanceled'] = 'Your payment was cancelled';
 $string['paymentcancelled'] = 'Your payment was cancelled';
-$string['paymentpending'] = 'Your payment is pending. We will process the payment status later';
+$string['paymentexpired'] = 'Your payment has expired';
+$string['paymentfailed'] = 'Your payment has failed';
+$string['paymentopen'] = 'Your payment is open';
+$string['paymentpaid'] = 'Your have paid your order';
+$string['paymentpending'] = 'Your payment is pending';
+$string['paymentstatus:explanation'] = 'Please wait while we check the status of your payment.<br/>
+If your payment is completed you will be redirected.';
+$string['paymentstatus:heading'] = 'Processing payment';
+$string['paymentstatus:longwaitnotify'] = 'After {$a} seconds your payment has not validated yet.<br/>
+You can use the button below to continue or simply wait some more.<br/>
+<strong>Keep in mind that if you navigate away from this page you will be responsible for checking the delivery status of your ordered product(s) yourself.</strong>';
 $string['paymentsuccessful'] = 'Your payment was successful';
 $string['pluginname'] = 'Mollie';
 $string['pluginname_desc'] = 'The Mollie plugin allows you to receive payments via Mollie.';

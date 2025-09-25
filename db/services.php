@@ -22,8 +22,8 @@
  *
  * @package     paygw_mollie
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -44,6 +44,14 @@ $functions = [
         'classpath'   => '',
         'description' => 'Create a payment',
         'type'        => 'write',
+        'ajax'        => true,
+    ],
+    'paygw_mollie_get_payment_status' => [
+        'classname'   => 'paygw_mollie\external',
+        'methodname'  => 'get_payment_status',
+        'classpath'   => '',
+        'description' => 'Get a payment status',
+        'type'        => 'read',
         'ajax'        => true,
     ],
 ];

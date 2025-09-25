@@ -17,7 +17,7 @@
  * Mollie repository module to encapsulate all of the AJAX requests that can be sent for Mollie.
  *
  * @module     paygw_mollie/repository
- * @copyright   2021 Ing. R.J. van Dongen
+ * @copyright  2021 RvD
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

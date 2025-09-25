@@ -22,8 +22,8 @@
  *
  * @package     paygw_mollie
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -55,36 +55,22 @@ $PAGE->set_heading($pagetitle);
 try {
     // Callback is provided with internal record ID to match OUR record.
     $molliepaymentrecord = $DB->get_record('paygw_mollie', ['id' => $params['internalid']], '*', MUST_EXIST);
+    if ($molliepaymentrecord->userid != $USER->id) {
+        throw new moodle_exception('err:return:useridcheck', 'paygw_mollie');
+    }
+    $redirecturl = mollie_helper::determine_redirect_url($molliepaymentrecord->component,
+            $molliepaymentrecord->paymentarea, $molliepaymentrecord->itemid);
     // Verify record.
     mollie_helper::assert_payment_record_variables($molliepaymentrecord,
             $params['component'], $params['paymentarea'], $params['itemid']);
-    // Early exit: don't process if already paid. Might do more in the future?
-    if ($molliepaymentrecord->status === PaymentStatus::STATUS_PAID) {
-        // Already paid for!
-        $url = mollie_helper::determine_redirect_url($molliepaymentrecord->component,
-                $molliepaymentrecord->paymentarea, $molliepaymentrecord->itemid);
-        redirect($url, get_string('paymentalreadypaid', 'paygw_mollie'), 0, 'success');
-    }
-    // Let the helper hit the floor!
-    // This will do the validation and all that fun stuff.
-    $externaltransaction = mollie_helper::synchronize_status(null, $molliepaymentrecord);
-    if ($externaltransaction->status == PaymentStatus::STATUS_PAID) {
-        // Deliver course is cared for by the helper!
-        $url = mollie_helper::determine_redirect_url($molliepaymentrecord->component,
-                $molliepaymentrecord->paymentarea, $molliepaymentrecord->itemid);
-        redirect($url, get_string('paymentsuccessful', 'paygw_mollie'), 0, 'success');
 
-    } else if ($externaltransaction->status == PaymentStatus::STATUS_PENDING) {
-        // Display message.
-        redirect(new moodle_url('/'), get_string('paymentpending', 'paygw_mollie'), 0, notification::NOTIFY_WARNING);
-    } else if ($externaltransaction->status == PaymentStatus::STATUS_CANCELED) {
-        // Back to main page with notification.
-        redirect(new moodle_url('/'), get_string('paymentcancelled', 'paygw_mollie'), 0, notification::NOTIFY_WARNING);
-    } else {
-        // Back to main page with notification.
-        redirect(new moodle_url('/'), get_string('cannotprocessstatus', 'paygw_mollie'), 0, notification::NOTIFY_WARNING);
-    }
-
+    // Canceled, failed and expired are final. We'll display instead of doing "background processing".
+    $externaltransaction = mollie_helper::get_mollie_payment($molliepaymentrecord);
+    $break = [
+        PaymentStatus::STATUS_CANCELED,
+        PaymentStatus::STATUS_FAILED,
+        PaymentStatus::STATUS_EXPIRED,
+    ];
 } catch (\dml_missing_record_exception $dme) {
     redirect(new moodle_url('/'), get_string('transactionrecordnotfound', 'paygw_mollie'), 0, notification::NOTIFY_ERROR);
 } catch (moodle_exception $me) {
@@ -93,3 +79,26 @@ try {
     echo $e->getMessage();
     redirect(new moodle_url('/'), get_string('unknownerror', 'paygw_mollie'), 0, notification::NOTIFY_ERROR);
 }
+
+// When we get here, we'll have an overlay and perform background processing/checking.
+$longwait = 60;
+$checkinterval = 5;
+$pid = $molliepaymentrecord->id;
+$PAGE->requires->js_call_amd('paygw_mollie/paymentstatus', 'init', [$pid, $checkinterval, $longwait]);
+
+echo $OUTPUT->header();
+echo $OUTPUT->heading(get_string('paymentstatus:heading', 'paygw_mollie'), 2);
+echo '<div class="paygw_mollie_paymentstatus text-center">';
+echo '<div class="alert alert-info">'.get_string('paymentstatus:explanation', 'paygw_mollie').'</div>';
+echo '<div class="loader icon-size-6">';
+echo $OUTPUT->render_from_template('core/loading', []);
+echo '</div>';
+echo '<div id="paygw_mollie_paymentstatus"></div>';
+echo '<div id="paygw_redirect" class="hidden">';
+echo '<div class="longwaitnotify alert alert-warning hidden">';
+echo get_string('paymentstatus:longwaitnotify', 'paygw_mollie', format_time($longwait));
+echo '</div>';
+echo $OUTPUT->single_button($redirecturl, get_string('continue'), 'get', ['id' => 'paygw_mollie_continuebutton']);
+echo '</div>';
+echo '</div>';
+echo $OUTPUT->footer();

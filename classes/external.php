@@ -22,8 +22,8 @@
  *
  * @package     paygw_mollie
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -49,12 +49,11 @@ require_once($CFG->dirroot . '/payment/gateway/mollie/thirdparty/Mollie/vendor/a
  *
  * @package     paygw_mollie
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class external extends external_api {
-
     /**
      * Returns description of method parameters.
      *
@@ -288,4 +287,64 @@ class external extends external_api {
         ]);
     }
 
+    /**
+     * Parameter definition for get_payment_status
+     *
+     * @return external_function_parameters
+     */
+    public static function get_payment_status_parameters() {
+        return new external_function_parameters(['pid' => new external_value(PARAM_INT)]);
+    }
+
+    /**
+     * Return definition for get_payment_status
+     *
+     * @return external_
+     */
+    public static function get_payment_status_returns() {
+        $keys = [
+            'status' => new external_value(PARAM_ALPHANUMEXT, 'payment status'),
+            'messagetype' => new external_value(PARAM_ALPHANUMEXT, 'payment status messagetype'),
+            'isfinalstate' => new external_value(PARAM_BOOL, 'does this represent a final status?'),
+        ];
+        return new external_single_structure($keys);
+    }
+
+    /**
+     * Get payment status
+     *
+     * @param int $pid
+     * @return stdClass
+     */
+    public static function get_payment_status($pid) {
+        global $DB;
+        $params = static::validate_parameters(static::get_payment_status_parameters(), [
+            'pid' => $pid,
+        ]);
+
+        // Validate context, this also requires login.
+        $context = \core\context\system::instance();
+        external_api::validate_context($context);
+
+        $mollierecord = $DB->get_record('paygw_mollie', ['id' => $params['pid']]);
+        $finalstates = [
+            \Mollie\Api\Types\PaymentStatus::STATUS_CANCELED,
+            \Mollie\Api\Types\PaymentStatus::STATUS_EXPIRED,
+            \Mollie\Api\Types\PaymentStatus::STATUS_FAILED,
+            \Mollie\Api\Types\PaymentStatus::STATUS_PAID,
+        ];
+
+        $messagetypes = [
+            \Mollie\Api\Types\PaymentStatus::STATUS_CANCELED => 'warning',
+            \Mollie\Api\Types\PaymentStatus::STATUS_EXPIRED => 'danger',
+            \Mollie\Api\Types\PaymentStatus::STATUS_FAILED => 'danger',
+            \Mollie\Api\Types\PaymentStatus::STATUS_PAID => 'success',
+        ];
+
+        return (object)[
+            'status' => $mollierecord->status,
+            'messagetype' => $messagetypes[$mollierecord->status],
+            'isfinalstate' => in_array($mollierecord->status, $finalstates),
+        ];
+    }
 }

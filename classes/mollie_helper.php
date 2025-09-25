@@ -22,8 +22,8 @@
  *
  * @package     paygw_mollie
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -45,8 +45,8 @@ require_once($CFG->dirroot . '/payment/gateway/mollie/thirdparty/Mollie/vendor/a
  *
  * @package     paygw_mollie
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mollie_helper {
@@ -81,6 +81,28 @@ class mollie_helper {
     }
 
     /**
+     * Fetch transation record from Mollie.
+     *
+     * @param stdClass|null $transactionrecord
+     * @return \Mollie\Api\Resources\Payment the Mollie transaction info.
+     */
+    public static function get_mollie_payment(stdClass $transactionrecord) {
+        $config = helper::get_gateway_configuration($transactionrecord->component,
+                $transactionrecord->paymentarea, $transactionrecord->itemid, 'mollie');
+
+        // Finally we can initiate the Mollie API.
+        $mollie = new \Mollie\Api\MollieApiClient();
+        // DO NOT USE config. Testmode was stored in the mollie payment record.
+        if (!empty($transactionrecord->testmode)) {
+            $mollie->setApiKey($config['apikeytest']);
+        } else {
+            $mollie->setApiKey($config['apikey']);
+        }
+        $transaction = $mollie->payments->get($transactionrecord->orderid);
+        return $transaction;
+    }
+
+    /**
      * Try to synchronize the status for a payment based on the internal transactionrecord,
      * the Mollie Transaction info, or both.
      *
@@ -101,18 +123,7 @@ class mollie_helper {
         }
 
         if ($transaction === null) {
-            $config = helper::get_gateway_configuration($transactionrecord->component,
-                    $transactionrecord->paymentarea, $transactionrecord->itemid, 'mollie');
-
-            // Finally we can initiate the Mollie API.
-            $mollie = new \Mollie\Api\MollieApiClient();
-            // DO NOT USE config. Testmode was stored in the mollie payment record.
-            if (!empty($transactionrecord->testmode)) {
-                $mollie->setApiKey($config['apikeytest']);
-            } else {
-                $mollie->setApiKey($config['apikey']);
-            }
-            $transaction = $mollie->payments->get($transactionrecord->orderid);
+            $transaction = static::get_mollie_payment($transactionrecord);
         }
         if ($transactionrecord === null) {
             $transactionrecord = $DB->get_record('paygw_mollie',
@@ -168,12 +179,13 @@ class mollie_helper {
                         $transactionrecord->component, $transactionrecord->paymentarea,
                         $transactionrecord->itemid, $transactionrecord->userid,
                         $cost, $payable->get_currency(), 'mollie');
-                helper::deliver_order($transactionrecord->component, $transactionrecord->paymentarea,
-                        $transactionrecord->itemid, $paymentid, $transactionrecord->userid);
                 // Set payment ID!
                 $transactionrecord->paymentid = $paymentid;
                 $transactionrecord->timemodified = time();
                 $DB->update_record('paygw_mollie', $transactionrecord);
+                // And deliver order.
+                helper::deliver_order($transactionrecord->component, $transactionrecord->paymentarea,
+                        $transactionrecord->itemid, $paymentid, $transactionrecord->userid);
                 break;
         }
 

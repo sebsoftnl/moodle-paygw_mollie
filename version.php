@@ -22,17 +22,16 @@
  *
  * @package     paygw_mollie
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2025061100;
+$plugin->version   = 2025090100;
 $plugin->requires  = 2024042200; // 4.4+
 $plugin->component = 'paygw_mollie';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = 'v1.0.3 (build 2025061100)';
+$plugin->release = 'v1.0.4 (build 2025090100)';
 $plugin->supported = [404, 405];
-

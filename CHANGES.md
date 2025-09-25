@@ -1,3 +1,11 @@
+v1.0.4 (build 2025090100)
+
+** Added WS function to check payment status.
+** Added JS to check payment status.
+** Changed process so return.php does not do any processing. It now relies on the above WS function and JS.
+
+-----
+
 v1.0.3 (build 2025061100)
 ** Some minor code changes
 ** Ensured compatibility with Moodle 4.4+ (funded by Avetica BV)
