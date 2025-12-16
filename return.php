@@ -58,11 +58,18 @@ try {
     if ($molliepaymentrecord->userid != $USER->id) {
         throw new moodle_exception('err:return:useridcheck', 'paygw_mollie');
     }
-    $redirecturl = mollie_helper::determine_redirect_url($molliepaymentrecord->component,
-            $molliepaymentrecord->paymentarea, $molliepaymentrecord->itemid);
+    $redirecturl = mollie_helper::determine_redirect_url(
+        $molliepaymentrecord->component,
+        $molliepaymentrecord->paymentarea,
+        $molliepaymentrecord->itemid
+    );
     // Verify record.
-    mollie_helper::assert_payment_record_variables($molliepaymentrecord,
-            $params['component'], $params['paymentarea'], $params['itemid']);
+    mollie_helper::assert_payment_record_variables(
+        $molliepaymentrecord,
+        $params['component'],
+        $params['paymentarea'],
+        $params['itemid']
+    );
 
     // Canceled, failed and expired are final. We'll display instead of doing "background processing".
     $externaltransaction = mollie_helper::get_mollie_payment($molliepaymentrecord);
@@ -89,7 +96,7 @@ $PAGE->requires->js_call_amd('paygw_mollie/paymentstatus', 'init', [$pid, $check
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('paymentstatus:heading', 'paygw_mollie'), 2);
 echo '<div class="paygw_mollie_paymentstatus text-center">';
-echo '<div class="alert alert-info">'.get_string('paymentstatus:explanation', 'paygw_mollie').'</div>';
+echo '<div class="alert alert-info">' . get_string('paymentstatus:explanation', 'paygw_mollie') . '</div>';
 echo '<div class="loader icon-size-6">';
 echo $OUTPUT->render_from_template('core/loading', []);
 echo '</div>';

@@ -36,7 +36,6 @@ use core_external\external_function_parameters;
 use core_external\external_value;
 use core_external\external_single_structure;
 use core_external\external_multiple_structure;
-
 use core_payment\helper;
 use moodle_url;
 
@@ -100,10 +99,11 @@ class external extends external_api {
         $rs = [];
         foreach ($methods as $method) {
             $enabled = true;
-            if ((isset($method->minimumAmount) && !empty($method->minimumAmount->value)
-                        && $amount < $method->minimumAmount->value) ||
-                    (isset($method->maximumAmount) && !empty($method->maximumAmount->value)
-                            && $amount > $method->maximumAmount->value)) {
+            if (
+                (isset($method->minimumAmount) && !empty($method->minimumAmount->value) &&
+                $amount < $method->minimumAmount->value) ||
+                (isset($method->maximumAmount) && !empty($method->maximumAmount->value) && $amount > $method->maximumAmount->value)
+            ) {
                         $enabled = false;
             }
             $rs[] = (object)[
@@ -162,8 +162,14 @@ class external extends external_api {
      * @param int|null $bankid bank identifier|reserved for future use
      * @return array
      */
-    public static function create_payment(string $component, string $paymentarea, int $itemid,
-            string $description, ?string $paymentmethodid = null, ?int $bankid = null): array {
+    public static function create_payment(
+        string $component,
+        string $paymentarea,
+        int $itemid,
+        string $description,
+        ?string $paymentmethodid = null,
+        ?int $bankid = null
+    ): array {
         global $USER, $DB, $CFG;
 
         $params = self::validate_parameters(self::create_payment_parameters(), [
@@ -225,7 +231,7 @@ class external extends external_api {
                 'redirectUrl' => $returnurl->out(false),
                 'webhookUrl' => $exchangeurl->out(false),
                 'metadata' => (object)[
-                    'tool' => 'moodle/paygw_mollie-v'.get_config('paygw_mollie', 'version'),
+                    'tool' => 'moodle/paygw_mollie-v' . get_config('paygw_mollie', 'version'),
                     'extra1' => "{$component}|{$paymentarea}|{$itemid}|{$USER->id}",
                 ],
             ];
@@ -241,7 +247,6 @@ class external extends external_api {
             $record->id = $DB->update_record('paygw_mollie', $record);
 
             $success = true;
-
         } catch (\Exception $e) {
             debugging('Exception while trying to process payment: ' . $e->getMessage(), DEBUG_DEVELOPER);
             $success = false;
@@ -280,9 +285,11 @@ class external extends external_api {
     public static function create_payment_returns() {
         return new external_function_parameters([
             'success' => new external_value(PARAM_BOOL, 'Whether everything was successful or not.'),
-            'message' => new external_value(PARAM_RAW,
-                    'Message (usually the error message). Unused or not available if everything went well',
-                    VALUE_OPTIONAL),
+            'message' => new external_value(
+                PARAM_RAW,
+                'Message (usually the error message). Unused or not available if everything went well',
+                VALUE_OPTIONAL
+            ),
             'redirecturl' => new external_value(PARAM_RAW, 'Message (usually the error message).', VALUE_OPTIONAL),
         ]);
     }

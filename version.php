@@ -29,9 +29,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2025090100;
-$plugin->requires  = 2024042200; // 4.4+
+$plugin->version   = 2025120100;
+$plugin->requires  = 2023042400; // 4.4+
 $plugin->component = 'paygw_mollie';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = 'v1.0.4 (build 2025090100)';
-$plugin->supported = [404, 405];
+$plugin->release = 'v1.0.5 (build 2025120100)';
+$plugin->supported = [402, 502];

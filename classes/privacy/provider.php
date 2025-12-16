@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+// @codingStandardsIgnoreFile Due to Moodle failing the "class implements" alphabetically itself.
 
 /**
  * Privacy Subsystem implementation for paygw_mollie.
@@ -50,10 +51,10 @@ use core_payment\privacy\paygw_provider;
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements \core_privacy\local\metadata\provider,
-        \core_privacy\local\request\plugin\provider,
-        \core_privacy\local\request\core_userlist_provider,
-        paygw_provider {
-
+    \core_privacy\local\request\plugin\provider,
+    \core_privacy\local\request\core_userlist_provider,
+    paygw_provider
+{
     /**
      * Get the language string identifier with the component's language
      * file to explain why this plugin stores no data.
@@ -72,20 +73,20 @@ class provider implements \core_privacy\local\metadata\provider,
      */
     public static function get_metadata(\core_privacy\local\metadata\collection $collection): collection {
         $collection->add_database_table(
-                'paygw_mollie',
-                [
-                        'userid' => 'privacy:metadata:paygw_mollie:userid',
-                        'paymentid' => 'privacy:metadata:paygw_mollie:paymentid',
-                        'component' => 'privacy:metadata:paygw_mollie:component',
-                        'paymentarea' => 'privacy:metadata:paygw_mollie:paymentarea',
-                        'itemid' => 'privacy:metadata:paygw_mollie:itemid',
-                        'orderid' => 'privacy:metadata:paygw_mollie:orderid',
-                        'status' => 'privacy:metadata:paygw_mollie:status',
-                        'testmode' => 'privacy:metadata:paygw_mollie:testmode',
-                        'timecreated' => 'privacy:metadata:paygw_mollie:timecreated',
-                        'timemodified' => 'privacy:metadata:paygw_mollie:timemodified',
-                ],
-                'privacy:metadata:paygw_mollie'
+            'paygw_mollie',
+            [
+                    'userid' => 'privacy:metadata:paygw_mollie:userid',
+                    'paymentid' => 'privacy:metadata:paygw_mollie:paymentid',
+                    'component' => 'privacy:metadata:paygw_mollie:component',
+                    'paymentarea' => 'privacy:metadata:paygw_mollie:paymentarea',
+                    'itemid' => 'privacy:metadata:paygw_mollie:itemid',
+                    'orderid' => 'privacy:metadata:paygw_mollie:orderid',
+                    'status' => 'privacy:metadata:paygw_mollie:status',
+                    'testmode' => 'privacy:metadata:paygw_mollie:testmode',
+                    'timecreated' => 'privacy:metadata:paygw_mollie:timecreated',
+                    'timemodified' => 'privacy:metadata:paygw_mollie:timemodified',
+            ],
+            'privacy:metadata:paygw_mollie'
         );
         return $collection;
     }
@@ -126,8 +127,8 @@ class provider implements \core_privacy\local\metadata\provider,
             // Add contextual data for given user.
             $alldata = [$context->id => []];
             $alluserdata = $DB->get_recordset_sql(
-                    "SELECT * FROM {paygw_mollie} WHERE userid = :userid",
-                    ['userid' => $user->id]
+                "SELECT * FROM {paygw_mollie} WHERE userid = :userid",
+                ['userid' => $user->id]
             );
             foreach ($alluserdata as $userdata) {
                 $alldata[$context->id][] = (object) [
@@ -145,7 +146,7 @@ class provider implements \core_privacy\local\metadata\provider,
             $alluserdata->close();
 
             // The data is organised in: {?}/transactiondata.json.
-            array_walk($alldata, function($transactions, $contextid) {
+            array_walk($alldata, function ($transactions, $contextid) {
                 $context = \context::instance_by_id($contextid);
                 writer::with_context($context)->export_related_data(
                     ['paygw_mollie'],
@@ -219,8 +220,8 @@ class provider implements \core_privacy\local\metadata\provider,
         }
 
         $userids = $userlist->get_userids();
-        list($usersql, $userparams) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
-        $DB->delete_records_select('paygw_mollie', 'userid '.$usersql, $userparams);
+        [$usersql, $userparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+        $DB->delete_records_select('paygw_mollie', 'userid ' . $usersql, $userparams);
     }
 
     /**
@@ -257,5 +258,4 @@ class provider implements \core_privacy\local\metadata\provider,
             $data
         );
     }
-
 }

@@ -53,8 +53,12 @@ try {
     // Callback is provided with internal record ID to match OUR record.
     $transactionrecord = $DB->get_record('paygw_mollie', ['id' => $params['internalid']], '*', MUST_EXIST);
     // Verify record.
-    mollie_helper::assert_payment_record_variables($transactionrecord,
-            $params['component'], $params['paymentarea'], $params['itemid']);
+    mollie_helper::assert_payment_record_variables(
+        $transactionrecord,
+        $params['component'],
+        $params['paymentarea'],
+        $params['itemid']
+    );
     // And sycnhronize status.
     mollie_helper::synchronize_status(null, $transactionrecord);
     header("HTTP/1.1 200 OK");

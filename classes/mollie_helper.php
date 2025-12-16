@@ -33,7 +33,6 @@ use core_payment\helper;
 use stdClass;
 use moodle_exception;
 use moodle_url;
-
 use Mollie\Api\Resources\Payment;
 
 defined('MOODLE_INTERNAL') || die();
@@ -50,7 +49,6 @@ require_once($CFG->dirroot . '/payment/gateway/mollie/thirdparty/Mollie/vendor/a
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mollie_helper {
-
     /**
      * Assert or throw
      *
@@ -75,8 +73,10 @@ class mollie_helper {
      * @throws moodle_exception
      */
     public static function assert_payment_record_variables($record, $component, $paymentarea, $itemid) {
-        static::assert($record->component == $component && $record->paymentarea == $paymentarea && $record->itemid == $itemid,
-            'err:assert:paymentrecordvariables', 'paygw_mollie'
+        static::assert(
+            $record->component == $component && $record->paymentarea == $paymentarea && $record->itemid == $itemid,
+            'err:assert:paymentrecordvariables',
+            'paygw_mollie'
         );
     }
 
@@ -87,8 +87,12 @@ class mollie_helper {
      * @return \Mollie\Api\Resources\Payment the Mollie transaction info.
      */
     public static function get_mollie_payment(stdClass $transactionrecord) {
-        $config = helper::get_gateway_configuration($transactionrecord->component,
-                $transactionrecord->paymentarea, $transactionrecord->itemid, 'mollie');
+        $config = helper::get_gateway_configuration(
+            $transactionrecord->component,
+            $transactionrecord->paymentarea,
+            $transactionrecord->itemid,
+            'mollie'
+        );
 
         // Finally we can initiate the Mollie API.
         $mollie = new \Mollie\Api\MollieApiClient();
@@ -114,8 +118,10 @@ class mollie_helper {
      * @return \Mollie\Api\Resources\Payment the Mollie transaction info.
      * @throws moodle_exception
      */
-    public static function synchronize_status(?Payment $transaction = null,
-            ?stdClass $transactionrecord = null) {
+    public static function synchronize_status(
+        ?Payment $transaction = null,
+        ?stdClass $transactionrecord = null
+    ) {
         global $DB;
 
         if ($transaction === null && $transactionrecord === null) {
@@ -126,11 +132,10 @@ class mollie_helper {
             $transaction = static::get_mollie_payment($transactionrecord);
         }
         if ($transactionrecord === null) {
-            $transactionrecord = $DB->get_record('paygw_mollie',
-                    ['orderid' => $transaction->id], '*', MUST_EXIST);
+            $transactionrecord = $DB->get_record('paygw_mollie', ['orderid' => $transaction->id], '*', MUST_EXIST);
         }
 
-        list($ccomponent, $cpaymentarea, $citemid, $cuserid) = explode('|', $transaction->metadata->extra1);
+        [$ccomponent, $cpaymentarea, $citemid, $cuserid] = explode('|', $transaction->metadata->extra1);
         // Ok, validate.
         if ($transactionrecord->component !== $ccomponent) {
             throw new moodle_exception('err:validatetransaction:component', 'paygw_mollie');
@@ -171,21 +176,38 @@ class mollie_helper {
                 break;
             case \Mollie\Api\Types\PaymentStatus::STATUS_PAID:
                 // Deliver course.
-                $payable = helper::get_payable($transactionrecord->component,
-                        $transactionrecord->paymentarea, $transactionrecord->itemid);
-                $cost = helper::get_rounded_cost($payable->get_amount(), $payable->get_currency(),
-                        helper::get_gateway_surcharge('mollie'));
-                $paymentid = helper::save_payment($payable->get_account_id(),
-                        $transactionrecord->component, $transactionrecord->paymentarea,
-                        $transactionrecord->itemid, $transactionrecord->userid,
-                        $cost, $payable->get_currency(), 'mollie');
+                $payable = helper::get_payable(
+                    $transactionrecord->component,
+                    $transactionrecord->paymentarea,
+                    $transactionrecord->itemid
+                );
+                $cost = helper::get_rounded_cost(
+                    $payable->get_amount(),
+                    $payable->get_currency(),
+                    helper::get_gateway_surcharge('mollie')
+                );
+                $paymentid = helper::save_payment(
+                    $payable->get_account_id(),
+                    $transactionrecord->component,
+                    $transactionrecord->paymentarea,
+                    $transactionrecord->itemid,
+                    $transactionrecord->userid,
+                    $cost,
+                    $payable->get_currency(),
+                    'mollie'
+                );
                 // Set payment ID!
                 $transactionrecord->paymentid = $paymentid;
                 $transactionrecord->timemodified = time();
                 $DB->update_record('paygw_mollie', $transactionrecord);
                 // And deliver order.
-                helper::deliver_order($transactionrecord->component, $transactionrecord->paymentarea,
-                        $transactionrecord->itemid, $paymentid, $transactionrecord->userid);
+                helper::deliver_order(
+                    $transactionrecord->component,
+                    $transactionrecord->paymentarea,
+                    $transactionrecord->itemid,
+                    $paymentid,
+                    $transactionrecord->userid
+                );
                 break;
         }
 
@@ -237,8 +259,16 @@ class mollie_helper {
         $amount = \core_payment\helper::get_rounded_cost($payable->get_amount(), $currency, $surcharge);
 
         // Save (zero)payment.
-        $paymentid = \core_payment\helper::save_payment($payable->get_account_id(), $component,
-                $paymentarea, $itemid, $userid, $amount, $currency, 'mollie');
+        $paymentid = \core_payment\helper::save_payment(
+            $payable->get_account_id(),
+            $component,
+            $paymentarea,
+            $itemid,
+            $userid,
+            $amount,
+            $currency,
+            'mollie'
+        );
 
         // Typical filth: we want to be able to refer the record to the payment.
         // So we create the record, create the payment and then update the record again.
@@ -260,5 +290,4 @@ class mollie_helper {
         // Deliver ORDER.
         return \core_payment\helper::deliver_order($component, $paymentarea, $itemid, $paymentid, $userid);
     }
-
 }

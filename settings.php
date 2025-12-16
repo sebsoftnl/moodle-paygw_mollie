@@ -30,7 +30,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($ADMIN->fulltree) {
-
     $settings->add(new admin_setting_heading('paygw_mollie_settings', '', get_string('pluginname_desc', 'paygw_mollie')));
 
     \core_payment\helper::add_common_gateway_settings($settings, 'paygw_mollie');
@@ -41,5 +40,4 @@ if ($ADMIN->fulltree) {
         get_string('setting:useinternalzeropayments_help', 'paygw_mollie'),
         1
     ));
-
 }

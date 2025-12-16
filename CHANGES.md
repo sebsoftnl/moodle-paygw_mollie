@@ -1,3 +1,9 @@
+v1.0.5 (build 2025120100)
+
+** Make CI happier.
+
+-----
+
 v1.0.4 (build 2025090100)
 
 ** Added WS function to check payment status.
